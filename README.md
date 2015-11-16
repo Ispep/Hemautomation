@@ -1,13 +1,16 @@
 # Hemautomation
+
 Powershell modul för hemautomation. 
 
+Funktioner för att hantera
+  Vera Med UI7
+  Telldus Live
 
-Funktioner mot Vera och Telldus finns för tillfället. 
-
-Målet är att göra en smidig öppen modul för hemautomation 
+Målet är att göra en smidig öppen modul för hemautomation, bidra gärna med bra funktioner för hemautomation. 
 
 
-Grundläggande information finns här. 
+Grundläggande information finns här (kommer att portas in till den här sidan så fort jag hinner). 
+
 http://www.automatiserar.se/powershell-modul-for-hemautomation/
 
 // Ispep
