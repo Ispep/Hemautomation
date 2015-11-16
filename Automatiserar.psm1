@@ -1,6 +1,6 @@
 
 <#
-Skriven av Markus Jakobsson 
+Skriven av Ispep
 2015-11-16 
 www.automatiserar.se 
 
