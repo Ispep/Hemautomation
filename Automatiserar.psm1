@@ -1,10 +1,10 @@
-
+ï»¿
 <#
 Skriven av Ispep
 2015-11-16 
 www.automatiserar.se 
 
-All Dokumentation är flyttat till Github 
+All Dokumentation Ã¤r flyttat till Github 
 
    
 
@@ -25,23 +25,23 @@ function Get-Mj-VeraMode {
     [cmdletbinding()]
     param(
     $VeraIP = "vera",               # IP Adress till din vera. 
-    [switch]$RequireLogin,          # Används om din vera behöver en inloggning.
-    [string]$Password    = "",      # Om din vera kräver lösenord så spara lösenordet här
-    [string]$UserName    = ""       # Användarnamn till din vera
+    [switch]$RequireLogin,          # AnvÃ¤nds om din vera behÃ¶ver en inloggning.
+    [string]$Password    = "",      # Om din vera krÃ¤ver lÃ¶senord sÃ¥ spara lÃ¶senordet hÃ¤r
+    [string]$UserName    = ""       # AnvÃ¤ndarnamn till din vera
     )
 
     if (!(Test-Connection $VeraIP -Count 1)){Write-Warning "Kunde inte koppla upp mot IP: $VeraIP"; break}
 
-    # Börjar hämta hem vilket mode vera är i.
+    # BÃ¶rjar hÃ¤mta hem vilket mode vera Ã¤r i.
 
     if ($RequireLogin)
     {
             # skapar inloggings objekt.
-            $Pass = $Password | ConvertTo-SecureString -AsPlainText -Force # eftersom lösenordet tas emot i klartext så ändras detta till en secure string.
+            $Pass = $Password | ConvertTo-SecureString -AsPlainText -Force # eftersom lÃ¶senordet tas emot i klartext sÃ¥ Ã¤ndras detta till en secure string.
             $Cred = New-Object System.Management.Automation.PSCredential -ArgumentList $UserName, $Pass  
 
-        # Loggar in i vera och kollar vilket läge enheten är i.
-        Write-Verbose "$($MyInvocation.InvocationName):: Hämtar data med inloggning (Användare $UserName)"
+        # Loggar in i vera och kollar vilket lÃ¤ge enheten Ã¤r i.
+        Write-Verbose "$($MyInvocation.InvocationName):: HÃ¤mtar data med inloggning (AnvÃ¤ndare $UserName)"
         $Veramode = Invoke-WebRequest -Uri "http://$($VeraIP):3480/data_request?id=variableget&Variable=Mode" -Credential $Cred
 
     } 
@@ -49,7 +49,7 @@ function Get-Mj-VeraMode {
     else 
     
     {
-        Write-Verbose "$($MyInvocation.InvocationName):: Hämtar data utan inloggning"
+        Write-Verbose "$($MyInvocation.InvocationName):: HÃ¤mtar data utan inloggning"
        $Veramode = Invoke-WebRequest -Uri "http://$($VeraIP):3480/data_request?id=variableget&Variable=Mode"
 
 
@@ -59,7 +59,7 @@ function Get-Mj-VeraMode {
     if ($Veramode.StatusCode -eq 200)
     {
         # Lyckat resultat
-        Write-Verbose "$($MyInvocation.InvocationName):: Lyckades koppla upp och få statuscode 200"
+        Write-Verbose "$($MyInvocation.InvocationName):: Lyckades koppla upp och fÃ¥ statuscode 200"
 
         $tmpModeValue = switch (($Veramode.Content.trim()))
                        {
@@ -82,7 +82,7 @@ function Get-Mj-VeraMode {
     
     {
         Write-Verbose "$($MyInvocation.InvocationName):: Fick inte status code 200, kommer att returnera en varning"
-        Write-Warning "Fick fel information från veran. Kontrollera vad http svar: $($Veramode.StatusCode) innebär"
+        Write-Warning "Fick fel information frÃ¥n veran. Kontrollera vad http svar: $($Veramode.StatusCode) innebÃ¤r"
     }
 
 }
@@ -90,7 +90,7 @@ function Get-Mj-VeraMode {
 
 function Set-Mj-Veramode {
 <#
-    Funktionen byter läge på vera till någon av följande.
+    Funktionen byter lÃ¤ge pÃ¥ vera till nÃ¥gon av fÃ¶ljande.
 
         Home
         Away
@@ -102,31 +102,31 @@ function Set-Mj-Veramode {
     [cmdletbinding()]
     param(
     $VeraIP = "vera", # IP Adress till din vera. 
-    [validateset('Home','Away','Night','Vacation')]$newmode = "",    # Ange vilket läge du vill sätta.                    
-    [switch]$RequireLogin,          # Används om din vera behöver en inloggning.
-    [string]$Password    = "",      # Om din vera kräver lösenord så spara lösenordet här
-    [string]$UserName    = ""       # Användarnamn till din vera
+    [validateset('Home','Away','Night','Vacation')]$newmode = "",    # Ange vilket lÃ¤ge du vill sÃ¤tta.                    
+    [switch]$RequireLogin,          # AnvÃ¤nds om din vera behÃ¶ver en inloggning.
+    [string]$Password    = "",      # Om din vera krÃ¤ver lÃ¶senord sÃ¥ spara lÃ¶senordet hÃ¤r
+    [string]$UserName    = ""       # AnvÃ¤ndarnamn till din vera
     )
 
     if ($RequireLogin)
     {
         # skapar inloggings objekt.
-        $Pass = $Password | ConvertTo-SecureString -AsPlainText -Force # eftersom lösenordet tas emot i klartext så ändras detta till en secure string.
+        $Pass = $Password | ConvertTo-SecureString -AsPlainText -Force # eftersom lÃ¶senordet tas emot i klartext sÃ¥ Ã¤ndras detta till en secure string.
         $Cred = New-Object System.Management.Automation.PSCredential -ArgumentList $UserName, $Pass  
 
-        # Kontrollera så att veran inte redan är i läget du försöker sätta. 
+        # Kontrollera sÃ¥ att veran inte redan Ã¤r i lÃ¤get du fÃ¶rsÃ¶ker sÃ¤tta. 
         $CurrentVeraMode = Get-Mj-VeraMode -VeraIP $VeraIP -RequireLogin -UserName $UserName -Password $Password
 
             Write-Verbose "$($MyInvocation.InvocationName):: `$CurrentVeraMode.mode = $($CurrentVeraMode.mode) `$newmode = $newmode"
 
             if ($CurrentVeraMode.mode -eq $newmode)
             {
-                Write-Verbose "$($MyInvocation.InvocationName):: Du är redan är redan i $newmode, kommer inte att sätta det igen"
-                Write-Warning "Veran är redan satt i $newmode"
+                Write-Verbose "$($MyInvocation.InvocationName):: Du Ã¤r redan Ã¤r redan i $newmode, kommer inte att sÃ¤tta det igen"
+                Write-Warning "Veran Ã¤r redan satt i $newmode"
             }
             else 
             {
-                # Byter här till rätt mode.
+                # Byter hÃ¤r till rÃ¤tt mode.
 
             $VeraModeToSet = switch ($newmode)
             {
@@ -137,17 +137,17 @@ function Set-Mj-Veramode {
                             Default {"ERROR"          }
 
             }
-            Write-Verbose "$($MyInvocation.InvocationName):: Lommer nu att sätta vera mode $veramodetoset, vilket är $newmode"
+            Write-Verbose "$($MyInvocation.InvocationName):: Lommer nu att sÃ¤tta vera mode $veramodetoset, vilket Ã¤r $newmode"
             
             $VeraModeResultat = Invoke-WebRequest -Uri "http://$($VeraIP):3480/data_request?id=lu_action&serviceId=urn:micasaverde-com:serviceId:HomeAutomationGateway1&action=SetHouseMode&Mode=$VeraModeToSet" -Credential $Cred
 
                 if ($(([xml]$VeraModeResultat.Content).SetHouseModeResponse.ok) -eq "OK")
                 {
-                    Write-Verbose "$($MyInvocation.InvocationName):: Fick ett lyckat svar när mode byttes."
+                    Write-Verbose "$($MyInvocation.InvocationName):: Fick ett lyckat svar nÃ¤r mode byttes."
                     return "SUCCESS" 
                 } else 
                 {
-                    Write-Verbose "$($MyInvocation.InvocationName):: Misslyckades med att sätta nytt mode!, fick svaret:$(([xml]$VeraModeResultat.Content).SetHouseModeResponse.ok) "
+                    Write-Verbose "$($MyInvocation.InvocationName):: Misslyckades med att sÃ¤tta nytt mode!, fick svaret:$(([xml]$VeraModeResultat.Content).SetHouseModeResponse.ok) "
                     return "ERROR"
                 }
 
@@ -155,7 +155,7 @@ function Set-Mj-Veramode {
 
     } 
     
-    else       ##### Följande del kräver ej inloggnign
+    else       ##### FÃ¶ljande del krÃ¤ver ej inloggnign
      
     {
             
@@ -166,12 +166,12 @@ function Set-Mj-Veramode {
 
             if ($CurrentVeraMode.mode -eq $newmode)
             {
-                Write-Verbose "$($MyInvocation.InvocationName):: Du är redan är redan i $newmode, kommer inte att sätta det igen"
-                Write-Warning "Veran är redan satt i $newmode"
+                Write-Verbose "$($MyInvocation.InvocationName):: Du Ã¤r redan Ã¤r redan i $newmode, kommer inte att sÃ¤tta det igen"
+                Write-Warning "Veran Ã¤r redan satt i $newmode"
             }
             else 
             {
-                # Byter här till rätt mode.
+                # Byter hÃ¤r till rÃ¤tt mode.
 
             $VeraModeToSet = switch ($newmode)
             {
@@ -182,17 +182,17 @@ function Set-Mj-Veramode {
                             Default {"ERROR"          }
 
             }
-            Write-Verbose "$($MyInvocation.InvocationName):: Lommer nu att sätta vera mode $veramodetoset, vilket är $newmode"
+            Write-Verbose "$($MyInvocation.InvocationName):: Lommer nu att sÃ¤tta vera mode $veramodetoset, vilket Ã¤r $newmode"
             
             $VeraModeResultat = Invoke-WebRequest -Uri "http://$($VeraIP):3480/data_request?id=lu_action&serviceId=urn:micasaverde-com:serviceId:HomeAutomationGateway1&action=SetHouseMode&Mode=$VeraModeToSet"
 
                 if ($(([xml]$VeraModeResultat.Content).SetHouseModeResponse.ok) -eq "OK")
                 {
-                    Write-Verbose "$($MyInvocation.InvocationName):: Fick ett lyckat svar när mode byttes."
+                    Write-Verbose "$($MyInvocation.InvocationName):: Fick ett lyckat svar nÃ¤r mode byttes."
                     return "SUCCESS" 
                 } else 
                 {
-                    Write-Verbose "$($MyInvocation.InvocationName):: Misslyckades med att sätta nytt mode!, fick svaret:$(([xml]$VeraModeResultat.Content).SetHouseModeResponse.ok) "
+                    Write-Verbose "$($MyInvocation.InvocationName):: Misslyckades med att sÃ¤tta nytt mode!, fick svaret:$(([xml]$VeraModeResultat.Content).SetHouseModeResponse.ok) "
                     return "ERROR"
                 }
 
@@ -206,38 +206,38 @@ function Set-Mj-Veramode {
 
 #### slut set och get veramodes ###
 
-############# Följande möjliggör en backup av backupen i Vera. 
+############# FÃ¶ljande mÃ¶jliggÃ¶r en backup av backupen i Vera. 
 Function Get-MJ-VeraBackup{
     [cmdletbinding()]
     param(
     $veraIP,                         # Ip adress till vera
-    $FilDestination = "C:\temp",     # Sökväg dit filen ska sparas C:\temp är default om inte annat anges.
-    $FilNamn        = "VeraBackup",  # Namnet på filen som ska sparas ( datum och .tgz adderas )
-    [switch]$LoginEnabled,           # Används om lösenord krävs från veran. 
-    $UserName,                       # Användarnamn 
-    $Password                        # Lösenord
+    $FilDestination = "C:\temp",     # SÃ¶kvÃ¤g dit filen ska sparas C:\temp Ã¤r default om inte annat anges.
+    $FilNamn        = "VeraBackup",  # Namnet pÃ¥ filen som ska sparas ( datum och .tgz adderas )
+    [switch]$LoginEnabled,           # AnvÃ¤nds om lÃ¶senord krÃ¤vs frÃ¥n veran. 
+    $UserName,                       # AnvÃ¤ndarnamn 
+    $Password                        # LÃ¶senord
 
     )
 
-    Write-Verbose "$($MyInvocation.InvocationName):: Hämtar Backup från $veraIP"
+    Write-Verbose "$($MyInvocation.InvocationName):: HÃ¤mtar Backup frÃ¥n $veraIP"
     $veraPath = "http://" + $veraIP + "/cgi-bin/cmh/backup.sh"
     
-    Write-Verbose "$($MyInvocation.InvocationName):: Hämtar från: $veraPath"
+    Write-Verbose "$($MyInvocation.InvocationName):: HÃ¤mtar frÃ¥n: $veraPath"
 
         if (Test-Connection $veraIP -Count 1 -ErrorAction SilentlyContinue)
         {
-            Write-Verbose "$($MyInvocation.InvocationName):: Veran svarar på ping"
+            Write-Verbose "$($MyInvocation.InvocationName):: Veran svarar pÃ¥ ping"
 
 
-            ### Kontrollerar om sökvägen dit filen ska sparas finns
+            ### Kontrollerar om sÃ¶kvÃ¤gen dit filen ska sparas finns
 
             if (Test-Path $FilDestination)
             {
-                Write-Verbose "$($MyInvocation.InvocationName):: Sökvägen $FilDestination finns"
+                Write-Verbose "$($MyInvocation.InvocationName):: SÃ¶kvÃ¤gen $FilDestination finns"
             }
             else 
             {
-                Write-Verbose "$($MyInvocation.InvocationName):: Sökvägen saknas, kommer att skapa den."
+                Write-Verbose "$($MyInvocation.InvocationName):: SÃ¶kvÃ¤gen saknas, kommer att skapa den."
                 New-Item -Path $FilDestination -ItemType directory -ErrorVariable FileError | Out-Null
 
                 if ($FileError)
@@ -254,7 +254,7 @@ Function Get-MJ-VeraBackup{
                 
                 ### Laddar hem backupen 
 
-                 Write-Verbose "$($MyInvocation.InvocationName):: Börjar ladda hem data"
+                 Write-Verbose "$($MyInvocation.InvocationName):: BÃ¶rjar ladda hem data"
 
                 $VeraWebData = New-Object System.Net.WebClient
                 
@@ -262,10 +262,10 @@ Function Get-MJ-VeraBackup{
 
                     IF ($LoginEnabled)
                     {
-                            Write-Verbose "$($MyInvocation.InvocationName):: Testar att logga in med lösenord."
+                            Write-Verbose "$($MyInvocation.InvocationName):: Testar att logga in med lÃ¶senord."
 
                         
-                            $Password = $Password | ConvertTo-SecureString -AsPlainText -Force # eftersom lösenordet tas emot i klartext så ändras detta till en secure string.
+                            $Password = $Password | ConvertTo-SecureString -AsPlainText -Force # eftersom lÃ¶senordet tas emot i klartext sÃ¥ Ã¤ndras detta till en secure string.
                             $Cred = New-Object System.Management.Automation.PSCredential -ArgumentList $UserName, $Password    
 
                             Write-Verbose "$($MyInvocation.InvocationName):: "
@@ -282,7 +282,7 @@ Function Get-MJ-VeraBackup{
                     } 
                     ELSE 
                     {                
-                        Write-Verbose "$($MyInvocation.InvocationName):: Laddar hem från $veraIP utan lösenord"                
+                        Write-Verbose "$($MyInvocation.InvocationName):: Laddar hem frÃ¥n $veraIP utan lÃ¶senord"                
 
                         $VeraWebData.Headers.Add([System.Net.HttpRequestHeader]::AcceptEncoding, "gzip")
                         $VeraWebData.DownloadFile($veraPath, $Totaldestination)
@@ -293,7 +293,7 @@ Function Get-MJ-VeraBackup{
         } 
         else 
         {
-            Write-Verbose "$($MyInvocation.InvocationName):: Veran svarar inte på ping"
+            Write-Verbose "$($MyInvocation.InvocationName):: Veran svarar inte pÃ¥ ping"
             Write-Warning "Kunde inte koppla upp mot $veraIP"
             return "ERROR - Kunde inte koppla upp till $veraIP"
         }
@@ -308,63 +308,63 @@ Function Get-MJ-VeraBackup{
 function Update-MJ-Module {
 <#
 .Synopsis
-Funktionen Update-MJ-Module används för att uppdatera modulen över internet, för att detta ska fungera så måste du ha döpt modulen till Automatiserar.psm1
+Funktionen Update-MJ-Module anvÃ¤nds fÃ¶r att uppdatera modulen Ã¶ver internet, fÃ¶r att detta ska fungera sÃ¥ mÃ¥ste du ha dÃ¶pt modulen till Automatiserar.psm1
 .DESCRIPTION
-Modulen Upddate-MJ-Module underlätta för dom som lägger till och kör mitt script, kör man funktionen och väljer:
-Update-MJ-Module ?CheckIfUpToDate, då får man direkt information om modulen som du kör är samma version som den som finns på www.automatiserar.se 
-Modulen har även stöd för att direkt uppdatera sig och lägga nuvarande version som en .old.
+Modulen Upddate-MJ-Module underlÃ¤tta fÃ¶r dom som lÃ¤gger till och kÃ¶r mitt script, kÃ¶r man funktionen och vÃ¤ljer:
+Update-MJ-Module ?CheckIfUpToDate, dÃ¥ fÃ¥r man direkt information om modulen som du kÃ¶r Ã¤r samma version som den som finns pÃ¥ www.automatiserar.se 
+Modulen har Ã¤ven stÃ¶d fÃ¶r att direkt uppdatera sig och lÃ¤gga nuvarande version som en .old.
 
 .EXAMPLE
    Update-MJ-Module -CheckIfUpToDate
 
-   Följande kontrollerar om du har samma version som den på www.automatiserar.se
+   FÃ¶ljande kontrollerar om du har samma version som den pÃ¥ www.automatiserar.se
 .EXAMPLE
    Update-MJ-Module -UpdateModule
 
-   Följande hämtar hem scriptet från hemsidan och placerar den på samma ställe som nuvarande modul ligger.
+   FÃ¶ljande hÃ¤mtar hem scriptet frÃ¥n hemsidan och placerar den pÃ¥ samma stÃ¤lle som nuvarande modul ligger.
    #>
     [cmdletbinding()]
     param(
-    [switch]$CheckIfUpToDate, # Kontrollerar vilken version du använder samt kollar vilken version som finns på internet.
-    [switch]$UpdateModule     # används om du vill uppdatera modulen nu.
+    [switch]$CheckIfUpToDate, # Kontrollerar vilken version du anvÃ¤nder samt kollar vilken version som finns pÃ¥ internet.
+    [switch]$UpdateModule     # anvÃ¤nds om du vill uppdatera modulen nu.
     )
     begin{
-            $ModuleFound = $false # lägger in en säkerhet för att kontrollera om modulen finns.
+            $ModuleFound = $false # lÃ¤gger in en sÃ¤kerhet fÃ¶r att kontrollera om modulen finns.
     }
     process{
         $AutomatiserObjekt = New-Object -TypeName psobject  # skapar ett objekt.
 
-        # Används för att kolla i vilken sökväg du har sparat modulen på, denna ska sedan uppdatera modulen med den nya versionen hit om du väljer det.
+        # AnvÃ¤nds fÃ¶r att kolla i vilken sÃ¶kvÃ¤g du har sparat modulen pÃ¥, denna ska sedan uppdatera modulen med den nya versionen hit om du vÃ¤ljer det.
         ($env:PSModulePath).Split(";") | ForEach-Object {
             
-            $currentModulePath = $_   # Sparar ner sökvägen som ska testas.
-            Write-Verbose "Kommer nu att kontrollera sökvägen $currentModulePath"
+            $currentModulePath = $_   # Sparar ner sÃ¶kvÃ¤gen som ska testas.
+            Write-Verbose "Kommer nu att kontrollera sÃ¶kvÃ¤gen $currentModulePath"
 
-                # kontrollerar om modulen funns under sökvägen.
+                # kontrollerar om modulen funns under sÃ¶kvÃ¤gen.
                 if ($automatiserarPath = Get-ChildItem -Filter Automatiserar.psm1 -Recurse -Path $currentModulePath -ErrorAction SilentlyContinue){
                     
-                    $ModuleFound = $true # Modulen hittades, sätter failsafe till True
+                    $ModuleFound = $true # Modulen hittades, sÃ¤tter failsafe till True
                      
-                    Write-Verbose "Hittade modulen under sökvägen $($automatiserarPath.fullname)"  
+                    Write-Verbose "Hittade modulen under sÃ¶kvÃ¤gen $($automatiserarPath.fullname)"  
                 
-                    # Letar fram vilken version du kör för tillfället.
+                    # Letar fram vilken version du kÃ¶r fÃ¶r tillfÃ¤llet.
                     $InstalleradVersion = $((Get-Content $automatiserarPath.FullName).Split("`n") | Where-Object {$_ -match "\[CurrentVersion\]"}).Split(']')[1]
                     
-                    Write-Verbose "Du kör version $InstalleradVersion"
+                    Write-Verbose "Du kÃ¶r version $InstalleradVersion"
                     $AutomatiserObjekt | Add-Member -MemberType NoteProperty -Name "Path" -Value $automatiserarPath.FullName
                 
-                    Write-Verbose "Den installerade versionen är $InstalleradVersion"
+                    Write-Verbose "Den installerade versionen Ã¤r $InstalleradVersion"
                     $AutomatiserObjekt | Add-Member -MemberType NoteProperty -Name "Installed Version" -Value $([decimal]$InstalleradVersion)
             
             
-               } else {Write-Verbose "hittade inte någon modul under sökvägen $currentModulePath som heter Automatiserar.psm1"}
+               } else {Write-Verbose "hittade inte nÃ¥gon modul under sÃ¶kvÃ¤gen $currentModulePath som heter Automatiserar.psm1"}
     
        
         }
     }
     end{
         if ($ModuleFound){
-            # Kollar om du har samma version som den som finns på internet
+            # Kollar om du har samma version som den som finns pÃ¥ internet
             if ($CheckIfUpToDate){
         
                 if ([decimal]$InstalleradVersion -ge ([decimal]$versionenOnInternet = (Get-MJ-AutomatiserarModulen -GetLatestVersionInfo).Version)){
@@ -372,11 +372,11 @@ Modulen har även stöd för att direkt uppdatera sig och lägga nuvarande version s
                     Write-Host "Du har senaste versionen $InstalleradVersion"
                 } else{
                     $false
-                    write-host "Du har version $InstalleradVersion, Det finns en nyare på internet med version: $versionenOnInternet"
+                    write-host "Du har version $InstalleradVersion, Det finns en nyare pÃ¥ internet med version: $versionenOnInternet"
                 
                 }
             } else {
-            Write-Verbose "Du har valt att inte kontrollera om din version är samma som den som finns på internet med -CheckIfUpToDate"
+            Write-Verbose "Du har valt att inte kontrollera om din version Ã¤r samma som den som finns pÃ¥ internet med -CheckIfUpToDate"
         
             $AutomatiserObjekt
         
@@ -387,36 +387,36 @@ Modulen har även stöd för att direkt uppdatera sig och lägga nuvarande version s
                     
                 Write-Verbose "Kommer nu att uppdatera modulen eftersom du valt -UpdateModule"
                 
-                Write-Verbose "Laddar ner modulen med hjälp av följande Rad (Get-MJ-AutomatiserarModulen -DownloadScript).script"            
+                Write-Verbose "Laddar ner modulen med hjÃ¤lp av fÃ¶ljande Rad (Get-MJ-AutomatiserarModulen -DownloadScript).script"            
 
                 $newVersionOfScript = (Get-MJ-AutomatiserarModulen -DownloadScript).script
 
                 if ($newVersionOfScript.length -ge 1){
 
-                    Write-Verbose "Scriptet är nu nerladdat och är $($newVersionOfScript.length) Tecken långt"
+                    Write-Verbose "Scriptet Ã¤r nu nerladdat och Ã¤r $($newVersionOfScript.length) Tecken lÃ¥ngt"
 
-                    write-host "kommer nu att döpa om $($AutomatiserObjekt.path) till $(Split-Path $AutomatiserObjekt.path)\$((Split-Path -Leaf $AutomatiserObjekt.path).Split(".")[0]).old"
+                    write-host "kommer nu att dÃ¶pa om $($AutomatiserObjekt.path) till $(Split-Path $AutomatiserObjekt.path)\$((Split-Path -Leaf $AutomatiserObjekt.path).Split(".")[0]).old"
                 
                     if (Test-Path "$(Split-Path $AutomatiserObjekt.path)\$((Split-Path -Leaf $AutomatiserObjekt.path).Split(".")[0]).old"){
                         
-                            Write-Host "Du har en äldre backup som ligger, är det ok att ta bort den?"
+                            Write-Host "Du har en Ã¤ldre backup som ligger, Ã¤r det ok att ta bort den?"
                             Remove-Item "$(Split-Path $AutomatiserObjekt.path)\$((Split-Path -Leaf $AutomatiserObjekt.path).Split(".")[0]).old" -Confirm
                     }
                 
                     Rename-Item -Path $($AutomatiserObjekt.path) -NewName "$(Split-Path $AutomatiserObjekt.path)\$((Split-Path -Leaf $AutomatiserObjekt.path).Split(".")[0]).old" -Confirm
 
-                    write-host "kommer nu att skapa en ny fil med följande namn: $($AutomatiserObjekt.path)"
+                    write-host "kommer nu att skapa en ny fil med fÃ¶ljande namn: $($AutomatiserObjekt.path)"
                     $newVersionOfScript | Out-File -FilePath $($AutomatiserObjekt.path) -Confirm
                 }
 
             } else {
                 
-                Write-Verbose "Du har inte valt att uppdatera modulen eftersom du inte körde med -UpdateModule"
+                Write-Verbose "Du har inte valt att uppdatera modulen eftersom du inte kÃ¶rde med -UpdateModule"
 
             }
        } else {
        
-        Write-Warning "Hittade inte någon modul på din som heter Automatiserar.psm1"
+        Write-Warning "Hittade inte nÃ¥gon modul pÃ¥ din som heter Automatiserar.psm1"
 
        }
 
@@ -429,31 +429,31 @@ Modulen har även stöd för att direkt uppdatera sig och lägga nuvarande version s
 Function Get-MJ-AutomatiserarModulen {
 <#
 .Synopsis
-Scriptet hämtar hem information från www.automatiserar.se för att visa om det har kommit någon ny version.    
+Scriptet hÃ¤mtar hem information frÃ¥n www.automatiserar.se fÃ¶r att visa om det har kommit nÃ¥gon ny version.    
 .DESCRIPTION
-Om du vill se vad som är nytt i scriptet så har jag gjort en funktion som hämtar hem och visar vad som är nytt i varje version, utöver det så har jag gjort en funktion som laddar ner hela scriptet till en variabel. 
+Om du vill se vad som Ã¤r nytt i scriptet sÃ¥ har jag gjort en funktion som hÃ¤mtar hem och visar vad som Ã¤r nytt i varje version, utÃ¶ver det sÃ¥ har jag gjort en funktion som laddar ner hela scriptet till en variabel. 
 .EXAMPLE
    Get-MJ-AutomatiserarModulen 
    
-   Genom att köra följande så får du information om gällande version samt information om ändringar i varje version.
+   Genom att kÃ¶ra fÃ¶ljande sÃ¥ fÃ¥r du information om gÃ¤llande version samt information om Ã¤ndringar i varje version.
 .EXAMPLE
     Get-MJ-AutomatiserarModulen -DownloadScript
     
-    Körs följande så laddas scriptet hem och sparas variabeln Script
+    KÃ¶rs fÃ¶ljande sÃ¥ laddas scriptet hem och sparas variabeln Script
 .EXAMPLE
     (Get-MJ-AutomatiserarModulen -DownloadScript).script | Out-File C:\temp\script.ps1 
 
-    Genom att köra följande så sparas scriptet under C:\temp\script.ps1
+    Genom att kÃ¶ra fÃ¶ljande sÃ¥ sparas scriptet under C:\temp\script.ps1
 .EXAMPLE
     Get-MJ-AutomatiserarModulen -GetLatestVersionInfo
 
-    Följande används för att få fram den senaste versionen som finns på internet. Följande funktion nyttjar den funktionen "Update-MJ-Module -UpdateModule"
+    FÃ¶ljande anvÃ¤nds fÃ¶r att fÃ¥ fram den senaste versionen som finns pÃ¥ internet. FÃ¶ljande funktion nyttjar den funktionen "Update-MJ-Module -UpdateModule"
     
 #>
     [cmdletbinding()]
     param(
-    [switch]$GetLatestVersionInfo,  # används för att få ut versionen som finns på internet
-    [switch]$DownloadScript         # används för att ladda ner hela scriptet i sin helhet.
+    [switch]$GetLatestVersionInfo,  # anvÃ¤nds fÃ¶r att fÃ¥ ut versionen som finns pÃ¥ internet
+    [switch]$DownloadScript         # anvÃ¤nds fÃ¶r att ladda ner hela scriptet i sin helhet.
     )
     begin{
     try{
@@ -468,14 +468,14 @@ Om du vill se vad som är nytt i scriptet så har jag gjort en funktion som hämtar
                 $AutoObjektTOExport = New-Object -TypeName psobject 
 
                 if ($GetLatestVersionInfo){
-                Write-Verbose "sparar versionsnummer för senaste versionen"
+                Write-Verbose "sparar versionsnummer fÃ¶r senaste versionen"
                 $LatestVersion = $($version[0].Split(']')[1])
     
                 }
                 else {
 
                 if (!($DownloadScript)){
-                    Write-host "Version på Internet $($version[0].Split(']')[1])" 
+                    Write-host "Version pÃ¥ Internet $($version[0].Split(']')[1])" 
                     write-host ""
         
                     write-host "Nyheter i version $($version[0].Split(']')[1])" 
@@ -486,7 +486,7 @@ Om du vill se vad som är nytt i scriptet så har jag gjort en funktion som hämtar
 
                     " -------------- Older versions ----------------- "
                 }
-            $i = 2 # räknare för versioner
+            $i = 2 # rÃ¤knare fÃ¶r versioner
             while ($i -le $version.Count){
                 $ii = 1 
                 if ($version[$i] -match "\]"){
@@ -534,13 +534,13 @@ Om du vill se vad som är nytt i scriptet så har jag gjort en funktion som hämtar
 function Read-MJ-AutomatiserarRSSFeed {
 <#
 .Synopsis
-   Funktionen Read-MJ-AutomatiserarRSSFeed läser in och visar alla nyheter på www.automtiserar.se
+   Funktionen Read-MJ-AutomatiserarRSSFeed lÃ¤ser in och visar alla nyheter pÃ¥ www.automtiserar.se
 .DESCRIPTION
    Long description
 .EXAMPLE
    Read-MJ-AutomatiserarRSSFeed
 
-   Genom att skriva följande så laddas och skrivs RSS feeden från www.automatiserar.se
+   Genom att skriva fÃ¶ljande sÃ¥ laddas och skrivs RSS feeden frÃ¥n www.automatiserar.se
 #>
 
 ([xml]$(Invoke-WebRequest -Uri "http://www.automatiserar.se/feed/").Content).rss.channel.ITEM | Select-Object title, pubdate, link
@@ -552,23 +552,23 @@ function Read-MJ-AutomatiserarRSSFeed {
 function Send-MJ-Speak {
 <#
 .Synopsis
-   Funktionen Send-MJ-Speak läser upp text i högtalaren med den inbyggda speech funktionen i Windows 
+   Funktionen Send-MJ-Speak lÃ¤ser upp text i hÃ¶gtalaren med den inbyggda speech funktionen i Windows 
 .DESCRIPTION
-   Genom att skicka in text till funktionen via -Message så får du detta uppläst. Tyvärr så fungerar rösten inte allt för bra på svenska så det bästa är att skicka englesk text.
+   Genom att skicka in text till funktionen via -Message sÃ¥ fÃ¥r du detta upplÃ¤st. TyvÃ¤rr sÃ¥ fungerar rÃ¶sten inte allt fÃ¶r bra pÃ¥ svenska sÃ¥ det bÃ¤sta Ã¤r att skicka englesk text.
 .EXAMPLE
     Send-MJ-Speak -message "Hello, its 4 degree Celsius outside today" 
 
-    Genom att skriva följande så läses detta upp.. vilket är rätt självklart. 
+    Genom att skriva fÃ¶ljande sÃ¥ lÃ¤ses detta upp.. vilket Ã¤r rÃ¤tt sjÃ¤lvklart. 
 .EXAMPLE 
     Send-MJ-Speak -message "Hello, its $((get-MJ-VeraStatus -veraIP vera | Where-Object {$_.EnhetsID -eq 67}).CurrentTemperature) degree Celsius outside today"
 
-    Om man nyttjar funktionen jag gjort för att hämta information ur Veran så blir det genast mycket intressantare (-veraIP "Vera" är mitt namn i DNS på enheten, Enhetsid 67 är en tempgivare i min vera)
-    Genom att skriva följande så får jag temperatur uppläst i realtid.
+    Om man nyttjar funktionen jag gjort fÃ¶r att hÃ¤mta information ur Veran sÃ¥ blir det genast mycket intressantare (-veraIP "Vera" Ã¤r mitt namn i DNS pÃ¥ enheten, Enhetsid 67 Ã¤r en tempgivare i min vera)
+    Genom att skriva fÃ¶ljande sÃ¥ fÃ¥r jag temperatur upplÃ¤st i realtid.
 #>
 [cmdletbinding()]
 param(
 [string]$message = "No information given!",
-[int]$SoundVolume     = 100 # hur högt ska de låta? 0 - 100 
+[int]$SoundVolume     = 100 # hur hÃ¶gt ska de lÃ¥ta? 0 - 100 
 )
 
 Add-Type -AssemblyName System.speech
@@ -582,9 +582,9 @@ $prata.Speak($message)
 ##################################################################
 <#
 .Synopsis
-   Följande funktion hämtar ut alla enheter ur veran, enheterna som hämtas mappas till ett rum och namn. 
+   FÃ¶ljande funktion hÃ¤mtar ut alla enheter ur veran, enheterna som hÃ¤mtas mappas till ett rum och namn. 
 .DESCRIPTION
-   Funktionen kommer att ändras allt eftersom, för tillfället så hämtas alla enheter ut oavsett om man valt att söka ett enda device. 
+   Funktionen kommer att Ã¤ndras allt eftersom, fÃ¶r tillfÃ¤llet sÃ¥ hÃ¤mtas alla enheter ut oavsett om man valt att sÃ¶ka ett enda device. 
 .EXAMPLE
    Example of how to use this cmdlet
 .EXAMPLE
@@ -595,19 +595,19 @@ Function get-MJ-VeraStatus {
 [cmdletbinding()]
 param(
 [string]$veraIP      = "Vera",  # ange din vera controllers ip eller namn
-[switch]$RequireLogin,          # Används om din vera behöver en inloggning.
-[string]$Password    = "",      # Om din vera kräver lösenord så spara lösenordet här
-[string]$UserName    = "",      # Användarnamn till din vera
-[int]$FindThisDevice            # ange detta om du vill få fram ett enda device.
+[switch]$RequireLogin,          # AnvÃ¤nds om din vera behÃ¶ver en inloggning.
+[string]$Password    = "",      # Om din vera krÃ¤ver lÃ¶senord sÃ¥ spara lÃ¶senordet hÃ¤r
+[string]$UserName    = "",      # AnvÃ¤ndarnamn till din vera
+[int]$FindThisDevice            # ange detta om du vill fÃ¥ fram ett enda device.
 )
 
-# Lägger till stöd för inloggning i Veran.
+# LÃ¤gger till stÃ¶d fÃ¶r inloggning i Veran.
 if ($RequireLogin){
-    $Pass = $Password | ConvertTo-SecureString -AsPlainText -Force # eftersom lösenordet tas emot i klartext så ändras detta till en secure string.
+    $Pass = $Password | ConvertTo-SecureString -AsPlainText -Force # eftersom lÃ¶senordet tas emot i klartext sÃ¥ Ã¤ndras detta till en secure string.
     $Cred = New-Object System.Management.Automation.PSCredential -ArgumentList $UserName, $Pass    
     }
 
-# Namnsättning på Enheter 
+# NamnsÃ¤ttning pÃ¥ Enheter 
 $SensorNameZWaveNetwork1      = "Z-wave Controller"     
 $SensorNameSceneController1   = "Scene Controller" 
 $SensorNameSwitchPower1       = "PowerPlugg"       
@@ -615,7 +615,7 @@ $SensorNameCamera1            = "Kamera"
 $SensorNameWOL1               = "Wake On Lan"              
 $SensorNameDataMine1          = "Data Mine"          
 $SensorNameLightSensor1       = "Ljus Sensor"
-$SensorNameSecuritySensor1    = "Säkerhetsbrytare"
+$SensorNameSecuritySensor1    = "SÃ¤kerhetsbrytare"
 $SensorNameTemperatureSensor1 = "Temperaturgivare"
 $SensorNameHumiditySensor1    = "Luftfuktighetsgivare"
 $SensorNameHaDevice1          = "HaDevice1"          
@@ -623,7 +623,7 @@ $SensorNamePingSensor1        = "Ping Sensor"
 $SensorNameVSwitch1           = "Virtuell Knapp"
 
 
-# slut på namnsättning: 
+# slut pÃ¥ namnsÃ¤ttning: 
 
 function UnixTime-TillNormaltid{
 [cmdletbinding()]
@@ -633,22 +633,22 @@ $Unuxtid   # ange ditt unix datum
 
 if ($Unuxtid -eq 0)
 {
-    Write-Verbose "$($MyInvocation.MyCommand):: Datum som mottogs är 0, skickar inte ut nått."
+    Write-Verbose "$($MyInvocation.MyCommand):: Datum som mottogs Ã¤r 0, skickar inte ut nÃ¥tt."
 } 
 else
 {
-    Write-Verbose "$($MyInvocation.MyCommand):: Innan översättning: $Unuxtid"
+    Write-Verbose "$($MyInvocation.MyCommand):: Innan Ã¶versÃ¤ttning: $Unuxtid"
     $origin = New-Object -Type DateTime -ArgumentList 1970, 1, 1, 0, 0, 0, 0
-    Write-Verbose "$($MyInvocation.MyCommand):: Efter översättning: $($origin.AddSeconds($Unuxtid))"
+    Write-Verbose "$($MyInvocation.MyCommand):: Efter Ã¶versÃ¤ttning: $($origin.AddSeconds($Unuxtid))"
     $origin.AddSeconds($Unuxtid)
 }
 
 } # end UnixTime-TillNormalTid
 
-# hämtar ut rum och ID.
+# hÃ¤mtar ut rum och ID.
 Function GetAllVeraNames {
 
-# Hämtar in informationen
+# HÃ¤mtar in informationen
 if ($RequireLogin){
 
     $veraJsonData = ConvertFrom-Json (Invoke-WebRequest -Uri "http://$($veraIP):3480/data_request?id=sdata" -Credential $Cred).RawContent.Split("`n")[3]
@@ -668,7 +668,7 @@ if ($RequireLogin){
 function Device-ToObject {
 [cmdletbinding()]
 param(
-[object]$CurrentDevice  # ett objekt som ska översättas till ett Powershell Objekt.
+[object]$CurrentDevice  # ett objekt som ska Ã¶versÃ¤ttas till ett Powershell Objekt.
 )
 begin{}
 process {
@@ -688,10 +688,10 @@ process {
     $PSVeraDevice | Add-Member -MemberType NoteProperty -Name "KWHReading"          -Value ""  # power plugg 
     $PSVeraDevice | Add-Member -MemberType NoteProperty -Name "Watts"               -Value ""  # power plugg
     $PSVeraDevice | Add-Member -MemberType NoteProperty -Name "CurrentTemperature"  -Value ""  # power plugg
-    $PSVeraDevice | Add-Member -MemberType NoteProperty -Name "Armed"               -Value ""  # Dörr brytare
-    $PSVeraDevice | Add-Member -MemberType NoteProperty -Name "Tripped"             -Value ""  # Dörr brytare / ping sensor / rörelse vakt 
-    $PSVeraDevice | Add-Member -MemberType NoteProperty -Name "ArmedTripped"        -Value ""  # Dörr brytare
-    $PSVeraDevice | Add-Member -MemberType NoteProperty -Name "LastTrip"            -Value ""  # Dörr brytare
+    $PSVeraDevice | Add-Member -MemberType NoteProperty -Name "Armed"               -Value ""  # DÃ¶rr brytare
+    $PSVeraDevice | Add-Member -MemberType NoteProperty -Name "Tripped"             -Value ""  # DÃ¶rr brytare / ping sensor / rÃ¶relse vakt 
+    $PSVeraDevice | Add-Member -MemberType NoteProperty -Name "ArmedTripped"        -Value ""  # DÃ¶rr brytare
+    $PSVeraDevice | Add-Member -MemberType NoteProperty -Name "LastTrip"            -Value ""  # DÃ¶rr brytare
     $PSVeraDevice | Add-Member -MemberType NoteProperty -Name "BatteryLevel"        -Value ""
     $PSVeraDevice | Add-Member -MemberType NoteProperty -Name "BatteryDate"         -Value ""
     $PSVeraDevice | Add-Member -MemberType NoteProperty -Name "IPPeriod"            -Value ""  # ping sensor
@@ -715,14 +715,14 @@ process {
     $PSVeraDevice | Add-Member -MemberType NoteProperty -Name "CommFailureTime"     -Value "" 
     $PSVeraDevice | Add-Member -MemberType NoteProperty -Name "Health"              -Value "" 
 # Nya i version 1.2
-    $PSVeraDevice | Add-Member -MemberType NoteProperty -Name "SwitchService"       -Value "" # exponerar schemat för knappar. 
+    $PSVeraDevice | Add-Member -MemberType NoteProperty -Name "SwitchService"       -Value "" # exponerar schemat fÃ¶r knappar. 
 
 
     $DeviceType = ($($CurrentDevice.states.state).service | Group-Object | Select-Object -ExpandProperty name)[0].split(':')[3] 
 
     #$PSVeraDevice | Add-Member -MemberType NoteProperty -Name "EnhetsTyp" -Value $DeviceType
 
-    $FixedDevice = $false # Detta kontrollerar om jag har hunnit lägga upp översättningen av objeketet.
+    $FixedDevice = $false # Detta kontrollerar om jag har hunnit lÃ¤gga upp Ã¶versÃ¤ttningen av objeketet.
 
   switch ($DeviceType)
   {
@@ -740,17 +740,17 @@ process {
       'PingSensor1'        {$PSVeraDevice | Add-Member -MemberType NoteProperty -Name "EnhetsTyp" -Value $SensorNamePingSensor1         ; $FixedDevice = $true;break}
       'VSwitch1'           {$PSVeraDevice | Add-Member -MemberType NoteProperty -Name "EnhetsTyp" -Value $SensorNameVSwitch1            ; $FixedDevice = $true;break}
       'ZWaveDevice1'       {$PSVeraDevice | Add-Member -MemberType NoteProperty -Name "EnhetsTyp" -Value $SensorNameZWaveDevice1        ; $FixedDevice = $true;break}
-      Default {Write-Warning "[Device-ToObject][Switch] Enheten $DeviceType är inte upplagd!";$PSVeraDevice | Add-Member -MemberType NoteProperty -Name "EnhetsTyp" -Value $DeviceType}
+      Default {Write-Warning "[Device-ToObject][Switch] Enheten $DeviceType Ã¤r inte upplagd!";$PSVeraDevice | Add-Member -MemberType NoteProperty -Name "EnhetsTyp" -Value $DeviceType}
   }
 
   $PSVeraDevice | Add-Member -MemberType NoteProperty -Name "ObjektiferadEnhet" -Value $FixedDevice
 
 
-  ### default som ska finnas på alla enheter...
+  ### default som ska finnas pÃ¥ alla enheter...
 
   if ($FixedDevice)
   {
-    # följande läggs till på alla enheter
+    # fÃ¶ljande lÃ¤ggs till pÃ¥ alla enheter
             $PSVeraDevice.Neighbors          = (($CurrentDevice.states.state) | Where-Object {$_.service -eq "urn:micasaverde-com:serviceId:ZWaveDevice1" -and $_.variable -eq "Neighbors"}).value 
             $PSVeraDevice.PollTxFail         = (($CurrentDevice.states.state) | Where-Object {$_.service -eq "urn:micasaverde-com:serviceId:ZWaveDevice1" -and $_.variable -eq "PollTxFail"}).value 
             $PSVeraDevice.PollOk             = (($CurrentDevice.states.state) | Where-Object {$_.service -eq "urn:micasaverde-com:serviceId:ZWaveDevice1" -and $_.variable -eq "PollOk"}).value 
@@ -773,14 +773,14 @@ process {
   
   }
     
-  Write-Verbose "[Device-ToObject] Ã–versätter enheten till ett objekt"
+  Write-Verbose "[Device-ToObject] Ãƒâ€“versÃ¤tter enheten till ett objekt"
 
-  # följande är av enhetstypen strömbrytare.
+  # fÃ¶ljande Ã¤r av enhetstypen strÃ¶mbrytare.
   if ($DeviceType -eq "SwitchPower1"){
     
         # ta med 
             #    SwitchPower1
-            #    EnergyMetering1   ( detta finns bara om enheten stödjer detta )
+            #    EnergyMetering1   ( detta finns bara om enheten stÃ¶djer detta )
 
             $PSVeraDevice.SwitchService      = (($CurrentDevice.states.state) | Where-Object {$_.service -eq "urn:upnp-org:serviceId:SwitchPower1"}).service
             $PSVeraDevice.Status             = (($CurrentDevice.states.state) | Where-Object {$_.service -eq "urn:upnp-org:serviceId:SwitchPower1" -and $_.variable -eq "Status"}).value
@@ -796,7 +796,7 @@ process {
 
   if ($DeviceType -eq "LightSensor1"){
 
-        $PSVeraDevice.CurrentLevel = (($CurrentDevice.states.state) | Where-Object {$_.service -eq "urn:micasaverde-com:serviceId:LightSensor1" -and $_.variable -eq "CurrentLevel"}).value    # man kan ha flera enheter här!
+        $PSVeraDevice.CurrentLevel = (($CurrentDevice.states.state) | Where-Object {$_.service -eq "urn:micasaverde-com:serviceId:LightSensor1" -and $_.variable -eq "CurrentLevel"}).value    # man kan ha flera enheter hÃ¤r!
         $PSVeraDevice.Lastupdated = (($CurrentDevice.states.state) | Where-Object {$_.service -eq "urn:micasaverde-com:serviceId:HaDevice1" -and $_.variable -eq "LastUpdate"}).value
 
   } # end LightSensor1
@@ -836,7 +836,7 @@ process {
 
  
   
-      $PSVeraDevice.CurrentLevel = (($CurrentDevice.states.state) | Where-Object {$_.service -eq "urn:micasaverde-com:serviceId:HumiditySensor1" -and $_.variable -eq "CurrentLevel"}).value    # man kan ha flera enheter här!
+      $PSVeraDevice.CurrentLevel = (($CurrentDevice.states.state) | Where-Object {$_.service -eq "urn:micasaverde-com:serviceId:HumiditySensor1" -and $_.variable -eq "CurrentLevel"}).value    # man kan ha flera enheter hÃ¤r!
 
 
   } # end HumiditySensor1
@@ -846,13 +846,13 @@ process {
 
     #$CurrentDevice.states.state
 
-    $PSVeraDevice.IPPeriod      = (($CurrentDevice.states.state) | Where-Object {$_.service -eq "urn:demo-ted-striker:serviceId:PingSensor1" -and $_.variable -eq "Period"}).value    # man kan ha flera enheter här!
-    $PSVeraDevice.IPAddress     = (($CurrentDevice.states.state) | Where-Object {$_.service -eq "urn:demo-ted-striker:serviceId:PingSensor1" -and $_.variable -eq "Address"}).value    # man kan ha flera enheter här!
-    $PSVeraDevice.IPInvert      = (($CurrentDevice.states.state) | Where-Object {$_.service -eq "urn:demo-ted-striker:serviceId:PingSensor1" -and $_.variable -eq "Invert"}).value    # man kan ha flera enheter här!
-    $PSVeraDevice.Tripped       = (($CurrentDevice.states.state) | Where-Object {$_.service -eq "urn:micasaverde-com:serviceId:SecuritySensor1" -and $_.variable -eq "Tripped"}).value    # man kan ha flera enheter här!
-    $PSVeraDevice.LastTrip      = (($CurrentDevice.states.state) | Where-Object {$_.service -eq "urn:micasaverde-com:serviceId:SecuritySensor1" -and $_.variable -eq "LastTrip"}).value    # man kan ha flera enheter här!
-    $PSVeraDevice.Armed         = (($CurrentDevice.states.state) | Where-Object {$_.service -eq "urn:micasaverde-com:serviceId:SecuritySensor1" -and $_.variable -eq "Armed"}).value    # man kan ha flera enheter här!
-    $PSVeraDevice.ArmedTripped  = (($CurrentDevice.states.state) | Where-Object {$_.service -eq "urn:micasaverde-com:serviceId:SecuritySensor1" -and $_.variable -eq "ArmedTripped"}).value    # man kan ha flera enheter här!
+    $PSVeraDevice.IPPeriod      = (($CurrentDevice.states.state) | Where-Object {$_.service -eq "urn:demo-ted-striker:serviceId:PingSensor1" -and $_.variable -eq "Period"}).value    # man kan ha flera enheter hÃ¤r!
+    $PSVeraDevice.IPAddress     = (($CurrentDevice.states.state) | Where-Object {$_.service -eq "urn:demo-ted-striker:serviceId:PingSensor1" -and $_.variable -eq "Address"}).value    # man kan ha flera enheter hÃ¤r!
+    $PSVeraDevice.IPInvert      = (($CurrentDevice.states.state) | Where-Object {$_.service -eq "urn:demo-ted-striker:serviceId:PingSensor1" -and $_.variable -eq "Invert"}).value    # man kan ha flera enheter hÃ¤r!
+    $PSVeraDevice.Tripped       = (($CurrentDevice.states.state) | Where-Object {$_.service -eq "urn:micasaverde-com:serviceId:SecuritySensor1" -and $_.variable -eq "Tripped"}).value    # man kan ha flera enheter hÃ¤r!
+    $PSVeraDevice.LastTrip      = (($CurrentDevice.states.state) | Where-Object {$_.service -eq "urn:micasaverde-com:serviceId:SecuritySensor1" -and $_.variable -eq "LastTrip"}).value    # man kan ha flera enheter hÃ¤r!
+    $PSVeraDevice.Armed         = (($CurrentDevice.states.state) | Where-Object {$_.service -eq "urn:micasaverde-com:serviceId:SecuritySensor1" -and $_.variable -eq "Armed"}).value    # man kan ha flera enheter hÃ¤r!
+    $PSVeraDevice.ArmedTripped  = (($CurrentDevice.states.state) | Where-Object {$_.service -eq "urn:micasaverde-com:serviceId:SecuritySensor1" -and $_.variable -eq "ArmedTripped"}).value    # man kan ha flera enheter hÃ¤r!
 
 
   } # end PingSensor1
@@ -862,7 +862,7 @@ process {
 }
 end {
 
-        # översätter så man slipper Unix Time i powershell...
+        # Ã¶versÃ¤tter sÃ¥ man slipper Unix Time i powershell...
         if ($PSVeraDevice.LastTrip){
         $PSVeraDevice.LastTrip = UnixTime-TillNormaltid -Unuxtid $PSVeraDevice.LastTrip
         }
@@ -902,20 +902,20 @@ $PSVeraDevice
 
 }
 
-# Verifierar så att enheten är aktiv.
-if (!(Test-Connection $veraIP -Count 1 -ErrorAction SilentlyContinue)){Write-Error "kunde ej hitta $veraIP"; break} else {Write-Verbose "[Test-Connection]`$VeraIP = svarar på ping"}
+# Verifierar sÃ¥ att enheten Ã¤r aktiv.
+if (!(Test-Connection $veraIP -Count 1 -ErrorAction SilentlyContinue)){Write-Error "kunde ej hitta $veraIP"; break} else {Write-Verbose "[Test-Connection]`$VeraIP = svarar pÃ¥ ping"}
 
 
 $enhetsInfon = GetAllVeraNames
 New-Variable VeraData
-# Hämtar in informationen 
+# HÃ¤mtar in informationen 
 if ($RequireLogin){
 $veraData = Invoke-WebRequest -Uri "http://$($veraIP):3480/data_request?id=status&output_format=xml" -Credential $Cred
 } else {
 $veraData = Invoke-WebRequest -Uri "http://$($veraIP):3480/data_request?id=status&output_format=xml"
 }
 
-# fortsätter bara om man fick korrket web response.
+# fortsÃ¤tter bara om man fick korrket web response.
 if ($veraData.StatusCode -eq 200){
 
     if ($veraData.content[0] -eq "<"){
@@ -924,7 +924,7 @@ if ($veraData.StatusCode -eq 200){
     $WorkData = ([xml]$veraData.Content).root
     } else {
     
-    # Nytt för att supportera Vera UI5
+    # Nytt fÃ¶r att supportera Vera UI5
     
     $Rcounter = 3; 
     $RUnit    = @($veraData.RawContent.Split("`n"))
@@ -942,10 +942,10 @@ if ($veraData.StatusCode -eq 200){
     Write-Verbose "[Workdata] Antal Enheter hittade $($WorkData.devices.ChildNodes.count)"
 
     Write-Verbose "[Workdata] Kontrollerar nu vad som finns i $FindThisDevice"
-    # om du söker efter en enda enhet så körs denna rad.
+    # om du sÃ¶ker efter en enda enhet sÃ¥ kÃ¶rs denna rad.
     if ($FindThisDevice -ge 1){
 
-    Write-Verbose "Du har valt att söka efter enbart $FindThisDevice"
+    Write-Verbose "Du har valt att sÃ¶ka efter enbart $FindThisDevice"
 
     # Skickar bara in en enda enhet som den finns. 
     $WorkData.devices.device | Where-Object {$_.id -eq $FindThisDevice} | ForEach-Object {Device-ToObject -CurrentDevice $_}
@@ -960,7 +960,7 @@ if ($veraData.StatusCode -eq 200){
 } 
 else 
 {
-    Write-Error "Felande status kod från webresponse!, fick inte status 200"    
+    Write-Error "Felande status kod frÃ¥n webresponse!, fick inte status 200"    
 }
 
 
@@ -986,12 +986,12 @@ function Set-Mj-VeraDevice {
     [parameter(Mandatory=$true)][int]$deviceId,
     [parameter(Mandatory=$true)][ValidateSet('ON','OFF',ignorecase=$true)][string]$NewStatus,
     $VeraIP = "vera",                # IP Adress till din vera. 
-    [switch]$RequireLogin,          # Används om din vera behöver en inloggning.
-    [string]$Password    = "",      # Om din vera kräver lösenord så spara lösenordet här
-    [string]$UserName    = ""       # Användarnamn till din vera
+    [switch]$RequireLogin,          # AnvÃ¤nds om din vera behÃ¶ver en inloggning.
+    [string]$Password    = "",      # Om din vera krÃ¤ver lÃ¶senord sÃ¥ spara lÃ¶senordet hÃ¤r
+    [string]$UserName    = ""       # AnvÃ¤ndarnamn till din vera
     )
-    $NewSwitchStatus = 0  # av eller på via HTTP
-    $PowerSwitchScheme = "urn:upnp-org:serviceId:SwitchPower1" # Schemat för strömbrytare.
+    $NewSwitchStatus = 0  # av eller pÃ¥ via HTTP
+    $PowerSwitchScheme = "urn:upnp-org:serviceId:SwitchPower1" # Schemat fÃ¶r strÃ¶mbrytare.
     if ($NewStatus -eq "ON")
     {
         Write-Verbose "$($MyInvocation.InvocationName):: `$NewStatus = 1"
@@ -1007,19 +1007,19 @@ function Set-Mj-VeraDevice {
     Write-Verbose "$($MyInvocation.InvocationName):: `$NewStatus = $NewStatus"
     Write-Verbose "$($MyInvocation.InvocationName):: `$RequireLogin = $RequireLogin"
     Write-Verbose "$($MyInvocation.InvocationName):: `$UserName = $UserName"
-    Write-Verbose "$($MyInvocation.InvocationName):: `$Password = (Längden på lösenordet): $($Password.Length)"
+    Write-Verbose "$($MyInvocation.InvocationName):: `$Password = (LÃ¤ngden pÃ¥ lÃ¶senordet): $($Password.Length)"
 
     
-    # här lagras om rätt typ av enhet hittades. 
+    # hÃ¤r lagras om rÃ¤tt typ av enhet hittades. 
     $SetResultat = get-MJ-VeraStatus -veraIP $VeraIP -FindThisDevice $deviceId
 
     if ($SetResultat.EnhetsID -eq $deviceId -and $SetResultat.SwitchService -eq $PowerSwitchScheme)
     {
-        Write-Verbose "$($MyInvocation.InvocationName):: Hittade enhet $deviceId med schema $($SetResultat.SwitchService), Fortsätter"
-        Write-Verbose "Kommer nu att byta status på $($SetResultat.name) i rummet $($SetResultat.room)"
+        Write-Verbose "$($MyInvocation.InvocationName):: Hittade enhet $deviceId med schema $($SetResultat.SwitchService), FortsÃ¤tter"
+        Write-Verbose "Kommer nu att byta status pÃ¥ $($SetResultat.name) i rummet $($SetResultat.room)"
         
         Invoke-WebRequest -Uri "http://$($veraip):3480/data_request?id=lu_action&output_format=xml&DeviceNum=$($deviceId)&serviceId=$($PowerSwitchScheme)&action=SetTarget&newTargetValue=$($NewSwitchStatus)" | Out-Null
-        Write-host "Bytte status på ID $deviceId till $NewStatus (Namn: `"$($SetResultat.name)`" i rummet `"$($SetResultat.room)`")"
+        Write-host "Bytte status pÃ¥ ID $deviceId till $NewStatus (Namn: `"$($SetResultat.name)`" i rummet `"$($SetResultat.room)`")"
     }
     else 
     {
@@ -1032,7 +1032,7 @@ function Set-Mj-VeraDevice {
 
 ##########################################################################################################################################################################################################################
 ##########################################################################################################################################################################################################################
-############################################################ Externa moduler som vi fått ok att lägga med i modulen ######################################################################################################
+############################################################ Externa moduler som vi fÃ¥tt ok att lÃ¤gga med i modulen ######################################################################################################
 ##########################################################################################################################################################################################################################
 ##########################################################################################################################################################################################################################
 
