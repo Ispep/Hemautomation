@@ -1,0 +1,74 @@
+Nya funktioner implementerade 2015-11-14 
+    
+    Helt nya funktioner för Telldus Live finns nu tack vare Anders på http://dollarunderscore.azurewebsites.net
+    All cred för Telldus modulerna ska gå till honom och inte mig! 
+    
+    Genom att köra följande rader är det möjligt att enkelt styra Telldus Live enheter via Powershell
+
+    börja alltid med Connect-TelldusLive i powershell sessionen du startar! 
+
+        För att koppla upp:        Connect-TelldusLive -Credential (Get-Credential)        
+        För att lista enheter:     Get-TDDevice
+        För att styra enheter:     Set-TDDevice
+        För att lista sensorer:    Get-TDSensor
+        För att hämta sensordata:  Get-TDSensorData
+        för att dimmra en enhet:   Set-TDDimmer
+
+
+Ny funktion implementerad 2015-02-22:
+
+"Get-Mj-VeraMode"
+"Set-Mj-Veramode"
+    
+
+Funktionen gör det nu möjligt att byta mode i vera, dvs från home till away eller liknande mycket snabbt!.
+	
+	Följande rad kommer att byta till Night mode om din vera inte kräver inloggning
+    	
+	    Set-Mj-Veramode -VeraIP DittVeraIP -newmode Night
+	
+	Följande rad kommer att byta till Night mode om din vera kräver inloggnign
+
+	    Set-Mj-Veramode -VeraIP DittVeraIP -newmode Night-RequireLogin -UserName "DittAnviD" -Password "DittLösenord"
+
+
+Ny funktion implemneterad 2015-02-18:
+
+    "Get-MJ-VeraBackup"
+    
+    Funktionen gör det möjligt att exportera ut backuperna från veran.
+    
+    Om din vera kräver inloggning testa följande:   
+    Get-MJ-VeraBackup -veraIP DittVeraIP -FilDestination C:\temp\ -LoginEnabled -UserName "DittKonto" -Pass "DittLösenord" -FilNamn "NamnPåBackupen"
+
+    Om din vera inte kräver inloggning:
+    Get-MJ-VeraBackup -veraIP DittVeraIP -FilDestination C:\temp\ -FilNamn "NamnPåBackupen"
+
+Ny funktion implementerad: 
+            
+    "Get-Mj-VeraDevice"
+    
+    Funktionen klarar nu av att enkelt starta / stoppa strömbrytare. 
+
+    För att starta enhet 11 exempelvis skriv följande:
+
+        Set-Mj-Veradevice -VeraIP "DittVeraIP" -deviceId 11 -NewStatus ON
+
+    Stänga alla störmbrytare i Vera genom följande rad: 
+    Get-MJ-VeraStatus | Where-Object {$_.SwitchService -eq "urn:upnp-org:serviceId:SwitchPower1"} | ForEach-Object {set-Mj-Veradevice -VeraIP "DittVeraIP" -deviceId $_.Enhetsid -NewStatus OFF}
+
+
+     Exponerar fler komponenter till Powershell    
+
+
+     Har nu gjort stöd för Vera med UI5 med.
+
+
+     Lägger till möjlighet att använda användarnamn och lösenord för att logga in i veran.
+     Exempel Get-MJ-Verastatus -username DemoUser -password Demo -RequireLogin
+
+     Update-MJ-Module - kollar vilken version du har installerad, samt möjliggör test mot internet.
+     Testar att uppdatera data i filen.
+
+
+     Get-MJ-AutomatiserarRSS - lägger till ett enkelt sätt att läsa rss feeden från hemsidan

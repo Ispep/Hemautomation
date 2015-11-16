@@ -14,4 +14,7 @@ Grundläggande information finns här (kommer att portas in till den här sidan 
 
 http://www.automatiserar.se/powershell-modul-for-hemautomation/
 
+
+
+
 // Ispep

@@ -4,100 +4,9 @@ Skriven av Markus Jakobsson
 2015-11-16 
 www.automatiserar.se 
 
-Syftet med Scriptet / modulen är att exponera funktonalitet från Veran i Powershell.
+All Dokumentation är flyttat till Github 
 
-Send-MJ-Speak - Ger möjlighet att skicka meddelanden som ljud. 
-
-[CurrentVersion]1.5
-[Nyheter]"* Stöd för Telldus Live finns nu tack vare Anders på http://dollarunderscore.azurewebsites.net"
-[OLDVersion]"1.4","* Nu går det att kontrollera vilket mode veran är i, samt snabbt byta till ett nytt mode."
-[OLDVersion]"1.3","* Nu går det att exportera ut backuperna från vera till en extern enhet."
-[OLDVersion]"1.2","* Set-Mj-VeraDevice tillåter ON / Off på enheter med stöd för detta. Schemat exporteras ut på strömbrytare som SwitchService" 
-[OLDVersion]"1.1","* Modulen Get-MJ-Verastatus tar nu med alla Z-wave egenskaper"
-[OLDVersion]"1.0","* Modulen Get-MJ-Verastatus fungerar nu med Vera UI5 med."
-[OLDVersion]"0.9","* Modulen Get-MJ-Verastatus klarar nu av att logga in med användarnamn och lösenord"
-[OLDVersion]"0.8","* Modulen kan nu kontrollera vilken version som är installerad","* Mer funktioner för att se nyheter i modulen på WWW.automatiserar.se"
-[OLDVersion]"0.7","* Rss läsare från www.automatiserar.se","* Modul för att kontrollera om nyare version av modulen finns på www.automatiserar.se"
-[OLDVersion]"0.6","* Uppläsning av data","* Konvertering av UNIX tidsformat till vanligt tidsformat"
-[OLDVersion]"0.5","* Första versionen"
-
-V1.5
-    Nya funktioner implementerade 2015-11-14 
-    
-    Helt nya funktioner för Telldus Live finns nu tack vare Anders på http://dollarunderscore.azurewebsites.net
-    All cred för Telldus modulerna ska gå till honom och inte mig! 
-    
-    Genom att köra följande rader är det möjligt att enkelt styra Telldus Live enheter via Powershell
-
-    börja alltid med Connect-TelldusLive i powershell sessionen du startar! 
-
-        För att koppla upp:        Connect-TelldusLive -Credential (Get-Credential)        
-        För att lista enheter:     Get-TDDevice
-        För att styra enheter:     Set-TDDevice
-        För att lista sensorer:    Get-TDSensor
-        För att hämta sensordata:  Get-TDSensorData
-        för att dimmra en enhet:   Set-TDDimmer
-V1.4
-    Ny funktion implementerad 2015-02-22:
-	     "Get-Mj-VeraMode"
-	     "Set-Mj-Veramode"
-    
-    Funktionen gör det nu möjligt att byta mode i vera, dvs från home till away eller liknande mycket snabbt!.
-	
-	Följande rad kommer att byta till Night mode om din vera inte kräver inloggning
-    	
-	    Set-Mj-Veramode -VeraIP DittVeraIP -newmode Night
-	
-	Följande rad kommer att byta till Night mode om din vera kräver inloggnign
-
-	    Set-Mj-Veramode -VeraIP DittVeraIP -newmode Night-RequireLogin -UserName "DittAnviD" -Password "DittLösenord"
-
-
-V1.3 
-    Ny funktion implemneterad 2015-02-18:
- 	    "Get-MJ-VeraBackup"
-    
-    Funktionen gör det möjligt att exportera ut backuperna från veran.
-    
-    Om din vera kräver inloggning testa följande:   
-    Get-MJ-VeraBackup -veraIP DittVeraIP -FilDestination C:\temp\ -LoginEnabled -UserName "DittKonto" -Pass "DittLösenord" -FilNamn "NamnPåBackupen"
-
-    Om din vera inte kräver inloggning:
-    Get-MJ-VeraBackup -veraIP DittVeraIP -FilDestination C:\temp\ -FilNamn "NamnPåBackupen"
-V1.2
-    Ny funktion implementerad: 
-            
-            "Get-Mj-VeraDevice"
-    
-    Funktionen klarar nu av att enkelt starta / stoppa strömbrytare. 
-
-    För att starta enhet 11 exempelvis skriv följande:
-
-        Set-Mj-Veradevice -VeraIP "DittVeraIP" -deviceId 11 -NewStatus ON
-
-    Stänga alla störmbrytare i Vera genom följande rad: 
-    Get-MJ-VeraStatus | Where-Object {$_.SwitchService -eq "urn:upnp-org:serviceId:SwitchPower1"} | ForEach-Object {set-Mj-Veradevice -VeraIP "DittVeraIP" -deviceId $_.Enhetsid -NewStatus OFF}
-
-V1.1
-     Exponerar fler komponenter till Powershell    
-
-V1.0
-     Har nu gjort stöd för Vera med UI5 med.
-
-V0.9
-     Lägger till möjlighet att använda användarnamn och lösenord för att logga in i veran.
-     Exempel Get-MJ-Verastatus -username DemoUser -password Demo -RequireLogin
-V0.8
-     Update-MJ-Module - kollar vilken version du har installerad, samt möjliggör test mot internet.
-     Testar att uppdatera data i filen.
-
-V0.7
-     Get-MJ-AutomatiserarRSS - lägger till ett enkelt sätt att läsa rss feeden från hemsidan
-
-V0.6 
-
-V0.5 
-           Första versionen av scriptet.
+   
 
 #>
 
@@ -115,7 +24,7 @@ function Get-Mj-VeraMode {
 
     [cmdletbinding()]
     param(
-    $VeraIP = "vera",                # IP Adress till din vera. 
+    $VeraIP = "vera",               # IP Adress till din vera. 
     [switch]$RequireLogin,          # Används om din vera behöver en inloggning.
     [string]$Password    = "",      # Om din vera kräver lösenord så spara lösenordet här
     [string]$UserName    = ""       # Användarnamn till din vera
@@ -123,7 +32,7 @@ function Get-Mj-VeraMode {
 
     if (!(Test-Connection $VeraIP -Count 1)){Write-Warning "Kunde inte koppla upp mot IP: $VeraIP"; break}
 
-    # Börjar hämta hem vilket mode verea är i.
+    # Börjar hämta hem vilket mode vera är i.
 
     if ($RequireLogin)
     {
@@ -513,6 +422,7 @@ Modulen har även stöd för att direkt uppdatera sig och lägga nuvarande version s
 
     }    
 }
+
 
 ##################################################################  Get-MJ-AutomatiserarModulen 
 
