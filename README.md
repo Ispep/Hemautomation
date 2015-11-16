@@ -3,8 +3,8 @@
 Powershell modul för hemautomation. 
 
 Funktioner för att hantera
-  Vera Med UI7
-  Telldus Live
+Vera Med UI7
+Telldus Live
 
 Målet är att göra en smidig öppen modul för hemautomation, bidra gärna med bra funktioner för hemautomation. 
 
