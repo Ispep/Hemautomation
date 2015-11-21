@@ -1030,6 +1030,56 @@ function Set-Mj-VeraDevice {
 
 }
 
+
+<#
+.Synopsis
+   Laddar och spara telldus behörigheter på ett säkert sätt.
+.DESCRIPTION
+   Skapat av Ispep 2015-11-21
+   Genom att nyttja följande funktion är det möjligt att automatiskt ladda och spara behörigheter på ett säkert sätt för telldus Live. 
+.EXAMPLE
+   $myCred = Get-TDCredential 
+.EXAMPLE
+   Another example of how to use this cmdlet
+#>
+function Get-TDCredential
+
+{
+    Begin
+    {
+        $PassFile = "$($env:APPDATA)\Telldus.log" # Definerar vart behörigheten ska sparas och laddas från.
+    }
+    Process
+    {
+        try 
+        {
+                
+            if (Test-Path $PassFile)
+            {    
+                Write-Verbose "Behörigheter laddas nu in från $PassFile"
+                $Credential = New-Object –TypeName System.Management.Automation.PSCredential –ArgumentList $((Get-Content $PassFile).Split(";")[0]), $(ConvertTo-SecureString -String ((Get-Content $PassFile).Split(";")[1]) -Force)
+                Write-Verbose "Konto: $($Credential.UserName) och lösenord laddades"
+            } 
+            else 
+            {
+                $newCred = Get-Credential -Message "Ange epost och lösenord till Telldus Live"
+                $Secretkey = convertfrom-securestring -securestring $($newCred.Password)
+                Out-File -InputObject "$($newCred.UserName);$($Secretkey)" -FilePath $PassFile 
+            }
+        }
+        catch 
+        {
+            Write-Error "Kunde inte ladda in sparat användarnamn och lösenord!" 
+        }
+    }
+    End
+    {
+        $Credential
+    }
+}
+
+
+
 ##########################################################################################################################################################################################################################
 ##########################################################################################################################################################################################################################
 ############################################################ Externa moduler som vi fått ok att lägga med i modulen ######################################################################################################
