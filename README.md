@@ -1,8 +1,8 @@
 ﻿# Hemautomation - www.automatiserar.se
 
-![image](https://{github.com/Ispep/Hemautomation/blob/master/Bilder/Automatiserar.png})
+![image](https://{raw.githubusercontent.com/Ispep/Hemautomation/master/Bilder/Automatiserar.png})
 
-![alt tag](github.com/Ispep/Hemautomation/blob/master/Bilder/Automatiserar.png "Description goes here")
+![alt tag](https://raw.githubusercontent.com/Ispep/Hemautomation/master/Bilder/Automatiserar.png "Description goes here")
 
  
 Här delar vi med oss av smarta script och program för hemautomation som vi skriver om på bloggen. Vi hoppas att fler har lust att bidra med smarta  
