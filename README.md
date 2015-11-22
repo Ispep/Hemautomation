@@ -1,6 +1,8 @@
 ﻿# Hemautomation - www.automatiserar.se
 
-![image](https://www.automatiserar.se/wp-content/uploads/2015/03/200x90-logga-v3.png)
+![image](https://{github.com/Ispep/Hemautomation/blob/master/Bilder/Automatiserar.png})
+
+![alt tag](github.com/Ispep/Hemautomation/blob/master/Bilder/Automatiserar.png "Description goes here")
 
  
 Här delar vi med oss av smarta script och program för hemautomation som vi skriver om på bloggen. Vi hoppas att fler har lust att bidra med smarta  
