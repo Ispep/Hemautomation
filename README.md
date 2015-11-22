@@ -1,4 +1,6 @@
 ﻿# Hemautomation - www.automatiserar.se
+
+![ScreenShot](https://raw.github.com/Ispep/Hemautomation/blob/master/Bilder/Automatiserar.png)
  
 Här delar vi med oss av smarta script och program för hemautomation som vi skriver om på bloggen. Vi hoppas att fler har lust att bidra med smarta  
 funktioner eller säger till du hittar fel i koden.
