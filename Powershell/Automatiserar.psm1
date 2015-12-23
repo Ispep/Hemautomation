@@ -1078,6 +1078,192 @@ function Get-TDCredential
     }
 }
 
+####### Funktion för att ladda bilder från web kameror.
+
+
+function Get-MJ-WebCamImage
+<#
+.Synopsis
+   Funktionen laddar ner bilder från webbkameror både med och utan lösenord. 
+   genom att ange ip eller dns namn till kameran så laddas en bild hem till vald mapp.
+
+   Skapad av: Ispep 
+   www.automatiserar.se
+   Version 1 
+   Skapad: 2015-12-23
+.DESCRIPTION
+   
+   Funktionen laddar hem en bild från webbkameror genom att gå in via web url:er 
+   Det finns stöd för att ta emot från pipeline eller direkt. 
+   
+   
+   * kräver kameran https så går det just nu inte att använda funktionen -KameraModell, utan då läggs hela sökvägen i -Webcam
+   * blir bilden svart? kontrollera då att du endera har en valt en dlink eller hikvison kamera. Om du har en annan modell så måste du ange sökvägen till kamerans bild url.
+   * saknas destinations mappen så visas en varning om att den kommer att skapas.
+
+.EXAMPLE
+   Exempel laddar hem en bild från en dlink kamera med hjälp av ip adressen. 
+   Get-Automatiserar-WebCamImage -WebCam "10.20.30.39" -Destination D:\temp -KameraModell Dlink
+.EXAMPLE
+   Exempel laddar hem en bild från en hikvision kamera som kräver inloggning. genom att välja "hikvision" så behöver du själv inte veta sökvägen dit bilden finns på kameran. 
+
+   Get-Automatiserar-WebCamImage -WebCam minkamera -Destination D:\temp -KameraModell Hikvision -username kamerakontot -password kamerapass
+.EXAMPLE
+   Exempel kommer att ladda hem en bild var 5 sekund tills scriptet stängs eller man trycker CTRL+C 
+   while ($true){ (Get-MJ-WebCamImage -KameraModell Dlink -Destination D:\temp -WebCam EnDlinkKamera); Start-Sleep -Seconds 5}
+
+.EXAMPLE 
+   Exempel hämtar en bild från en Hikvision kamera med inloggning.
+   Get-MJ-WebCamImage -Destination D:\temp -WebCam EnHikvision -username administrator -password hemligtLösen -KameraModell Hikvision
+
+.EXAMPLE
+   Exemplet hämtar en bild med hjälp av en direkt url till kameran
+
+   Get-MJ-WebCamImage -WebCam http://10.20.30.39/image/jpeg.cgi -Destination D:\temp
+#>
+{
+    [CmdletBinding()]
+    Param
+    (
+        # Välj vart bilden ska sparas. 
+        [Parameter(Mandatory=$true,
+                   #ValueFromPipeline=$true,
+                   ValueFromPipelineByPropertyName=$true,
+                   HelpMessage="Ange sökvägen dit bilden ska sparas.")]
+        [ValidateNotNull()]
+        [ValidateNotNullOrEmpty()][string]$Destination, 
+
+        # Destination till kameran
+        
+        [Parameter(Mandatory=$true,
+                   #ValueFromPipeline=$true,
+                   ValueFromPipelineByPropertyName=$true,
+                   HelpMessage="Ange IP eller dns namn till kameran")]        
+        [ValidateNotNull()]
+        [ValidateNotNullOrEmpty()]
+                   [string]$WebCam,
+
+        [Parameter(Mandatory=$false,
+                   #ValueFromPipeline=$true,
+                   ValueFromPipelineByPropertyName=$true,
+                   HelpMessage="Användarnamn till kameran")]
+                   [string]$username,
+
+        [Parameter(Mandatory=$false,
+                   #ValueFromPipeline=$true,
+                   ValueFromPipelineByPropertyName=$true,
+                   HelpMessage="Lösenord till kameran")]
+                   [string]$password,
+        
+        [Parameter(Mandatory=$false,
+                   #ValueFromPipeline=$true,
+                   ValueFromPipelineByPropertyName=$true,
+                   HelpMessage="Ange ett eget filnamn, avsluta med .jpg")][string]$Filename = '{0}-bild.jpg' -f (get-date -UFormat "%Y-%m-%d_%H-%M-%S"),       
+        
+        [Parameter(Mandatory=$false, 
+                   #ValueFromPipeline=$true,
+                   ValueFromPipelineByPropertyName=$true,
+                   HelpMessage="Ange någon av dom förkonfiguerade kamerorna",
+                   ParameterSetName='KameraModeller')]
+        [ValidateSet("Dlink", "Foscam", "Hikvision")]
+        [Alias("Modeller")] 
+        $KameraModell
+
+
+    )
+
+    Begin
+    {
+        $scriptversion = 1 #initial version av funktionen. 
+
+    }
+    Process
+    {
+
+     Write-Verbose "Destination = $Destination"
+        Write-Verbose "WebCam = $WebCam"
+        Write-Verbose "username = $username"
+        Write-Verbose "password = $($password.Length) (längden på lösenordet anges)"
+        Write-Verbose "Filename = $Filename"
+        Write-Verbose "KameraModell = $KameraModell" 
+
+        # följande objekt returneras alltid efter funktionen kört klart.
+        $ReturnResult = New-Object psobject -Property @{
+
+            Status       = [bool]$false
+            errors       = $()
+            Destination  = [string]""
+            Version      = [int]$scriptversion
+        }
+
+
+        $SavePath = (Join-Path -ChildPath $Filename  -Path $Destination) 
+        $WC = New-Object System.Net.WebClient
+    
+        if ($username -ne $null)
+        {       
+            Write-Verbose "Laddar in behörigheter till webbsidan"
+            $requirePassword = $true            
+            $WC.Credentials = new-object System.Net.NetworkCredential($username,$password ,$null)
+        } 
+
+
+        if ($WebCam -match "^http"){} else {Write-Verbose "lägger till http:// före `"$WebCam`""; $WebCam = "http://$webcam"}
+
+
+
+
+        # Kontrollerar om det finns en mapp dit bilden ska sparas. 
+        if (!(Test-Path $Destination))
+        {
+            Write-Warning "Mappen $Destination finns inte!"
+            New-Item -Path $Destination -ItemType directory -Confirm | Out-Null
+            if ($?){Write-Verbose "Mappen $Destination skapades korrekt"}
+        }
+
+        Write-Verbose "Kontrollerar om kamera modell är vald" 
+      
+          switch ($KameraModell){
+
+            'Dlink' {$WebCam = $WebCam + "/image/jpeg.cgi"; Write-Verbose "Switch, dlink vald"; break} # dlink kamera 
+            'Foscam' {Write-Verbose "Switch, foscam vald"; break} # Foscam
+            'Hikvision' {$webcam = $WebCam + "/Streaming/channels/1/picture"; Write-Verbose "Switch, Hikvision vald"; break} # Hikvision 
+            default {Write-Verbose "Ingen kamera modell vald"}  # ingen korrigering
+         }
+
+        
+        try 
+        {
+                # kontrollerar om kameran går att pinga
+                
+                    
+                  $wc.DownloadFile($WebCam, $SavePath)   ###
+                  if ($?)
+                  {
+                    
+                    $resultstatus = $true
+                    $ReturnResult.Destination = $SavePath
+                    $ReturnResult.Status = $true
+                  
+                  }
+        }
+        catch
+        {
+                Write-Warning "Kunde inte ladda ner bilden $Filename från $WebCam"
+                Write-Warning $($Error[0]).Exception
+                $ReturnResult.errors = $($Error[0]).Exception
+                $ReturnResult.Status = $false
+                
+        }
+
+
+    }
+    End
+    {
+      $ReturnResult  # returnerar ett objekt med hur det har gått.
+    }
+}
+
 
 
 ##########################################################################################################################################################################################################################
