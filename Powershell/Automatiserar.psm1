@@ -1264,7 +1264,123 @@ function Get-MJ-WebCamImage
     }
 }
 
+############################################### 
 
+function Get-MJ-SolUppNer {
+<#
+.Synopsis
+   Funktionen går ut på en hemsida och hämtar sol upp / ner för alla kommuner i sverige. 
+
+   Skriven av: Ispep
+   2015-12-23 
+   Version 1 - första version
+.DESCRIPTION
+   Scriptet hämtar hem sol upp och sol ner från "http://www.dinstartsida.se/solen-alla-kommuner.asp", så länge dom inte ändrar nått så kommer det att gå att hämta sol upp / ner och få tillbaka dessa som objekt med följande värden:
+   * Stad   (string)
+   * SolUpp (date time)
+   * SolNed (date time)
+   * Error  (felinformation)
+   * scriptversion (script versionen som körs)
+   
+
+.EXAMPLE
+   Hämtar hem alla solupp / solned i Sverige 
+   Get-MJ-SolUppNer 
+.EXAMPLE
+   hämtar information om just Härnösand genom att välja -stad och sedan skriva härnösand.
+
+   Get-MJ-SolUppNer -Stad härnösand
+.EXAMPLE
+    hämtar och sorterar alla städer som en formaterad lista
+    
+
+#>
+[cmdletbinding()]
+param(
+        [Parameter(Mandatory=$false,
+                   #ValueFromPipeline=$true,
+                   ValueFromPipelineByPropertyName=$true,
+                   HelpMessage="Ange den stad du vill se tiden för")]
+        [ValidateNotNull()]
+        [ValidateNotNullOrEmpty()][string]$Stad 
+
+)
+
+begin
+{
+    
+}
+process
+{
+    $Webconnected = $false 
+    $scriptversion = "1" 
+
+    try
+    {
+    $regexpfilter = "<tr style=`"background-color:#\w*;;`"><td class=`"small`" align=`"left`"><a href=`"solen-ort\.asp\?id=\d*`">(?<Stad>\D*)</a><\/td><td class=`"small`" align=`"center`">(?<SolUpp>\d*:\d*)<\/td><td class=`"small`" align=`"center`">(?<SolNer>\d*:\d*)"
+    $web = ((Invoke-WebRequest -Uri http://www.dinstartsida.se/solen-alla-kommuner.asp).RawContent)
+    $Webconnected = $true
+    }
+    catch
+    {
+        $myresult = [ordered]@{
+    
+              Stad = "-"
+              SolUpp = [datetime](get-date)
+              Solned = [datetime](get-date)
+              Error  = [bool]$true
+              Scriptversion = [int]$scriptversion
+        }
+        
+    }
+    
+    if ($Webconnected){
+        $allObjects = [regex]::Matches($web,$regexpfilter) | Select -ExpandProperty value | ForEach-Object {
+
+            $_ -match $regexpfilter | Out-Null
+
+            $myresult = [ordered]@{
+    
+                  Stad = $Matches.stad.Trim() 
+                  SolUpp = [datetime](get-date $($Matches.SolUpp.trim()))
+                  Solned = [datetime](get-date $($Matches.SolNer.Trim()))
+                  Error  = [bool]$false
+                  Scriptversion = [int]$scriptversion 
+            }
+        New-Object psobject -Property $myresult    
+
+        }
+    } 
+    else 
+    {
+
+    $allObjects = New-Object psobject -Property $myresult
+    
+    }
+}
+end
+{
+     if ($Stad -ne $null)
+     {
+        $Solstatus = $allObjects | Where-Object {$_ -match $Stad} 
+        if ($Solstatus.count -eq 0)
+        {
+            Write-Warning "Ingen stad hittad med namnet $Stad"
+        }
+        else
+        {
+            $Solstatus
+        }
+     }
+     else 
+     {
+        $allObjects
+     }
+}
+
+}
+
+########################## slut get-mj-soluppner
 
 ##########################################################################################################################################################################################################################
 ##########################################################################################################################################################################################################################
