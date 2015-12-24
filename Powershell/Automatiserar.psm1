@@ -6,8 +6,14 @@ www.automatiserar.se
 
 All Dokumentation är flyttat till Github 
 
-   
+Version 1.6 - 
+    2015-12-24 - Get-MJ-SolUppNer 
+        * hämtar hem solens upp och nedgång från internet
 
+    2015-12-23 - Get-MJ-WebCamImage   
+        * Laddar hem bilder från webbkameror
+        * Stödjer både Dlink och Hikvision native idag
+        * Stödjer Inloggning 
 #>
 
 ###
