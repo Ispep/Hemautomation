@@ -6,6 +6,10 @@ www.automatiserar.se
 
 All Dokumentation är flyttat till Github 
 
+Version 1.7 - 
+    2015-12-25 - Send-MJ-ArduinoData
+        * gör det möjligt att koppla upp till arudino via en COM port, just nu stödjer funktionen att skicka data.
+
 Version 1.6 - 
     2015-12-24 - Get-MJ-SolUppNer 
         * hämtar hem solens upp och nedgång från internet
@@ -1387,6 +1391,136 @@ end
 }
 
 ########################## slut get-mj-soluppner
+
+########################## Send-MJ-Arduinodata 
+
+function Send-MJ-ArduinoData
+<#
+.Synopsis
+   För att enkelt prata med Arduino över COM porten har jag gjort följande funktion.
+   Skapad av Ispep
+   2015-12-25
+   V1 - initial version. 
+
+.DESCRIPTION
+   Genom att köra funktionen så kopplar Powershell upp sig mot vald com port och skickar vald text.
+
+.EXAMPLE
+    Skickar kommando OPEN till Arduino en gång på COM3 med en baudrate på 9600. 
+
+    Send-MJ-ArduinoData -Data OPEN -Mode Write -ComPort COM3 -BaudRate 9600
+.EXAMPLE
+    Skivker kommandot CLOSE till Arduinon två gånger på COM3 med en baudrte på 9600
+
+    Send-MJ-ArduinoData -Data CLOSE -Mode Write -ComPort COM3 -BaudRate 9600 -Retryes 2
+#>
+{
+    [CmdletBinding()]
+    [Alias()]
+    [OutputType([int])]
+    Param
+    (
+        # Välj vilket data som ska skickas till Arduinon.
+        [Parameter(Mandatory=$true,
+                   ValueFromPipelineByPropertyName=$true,
+                   Position=0)]
+        $Data,
+        
+        # Param1 help description
+        [Parameter(Mandatory=$true,
+                   Position=1)]
+        [ValidateNotNull()]
+        [ValidateNotNullOrEmpty()]
+        [ValidateSet("Read", "Write")]
+        [string]$Mode,
+# Param1 help description
+        [Parameter(Mandatory=$true,
+                   Position=2)]
+        [ValidateNotNull()]
+        [ValidateNotNullOrEmpty()]
+        [ValidateSet("COM1", "COM2", "COM3", "COM4", "COM5", "COM6", "COM7", "COM8", "COM9", "COM10", "COM11" ,"COM12", "COM13", "COM14" ,"COM15" ,"COM16" ,"COM17" ,"COM18", "COM19", "COM20")]
+        [Alias("Port")] 
+        $ComPort,
+        
+        # Param1 help description
+        [Parameter(Mandatory=$false,
+                   Position=3)]
+        [ValidateNotNull()]
+        [ValidateNotNullOrEmpty()]
+        [ValidateSet(9600, 19200,38400,57600,74880,115200,230400,250000)]
+        [int]$BaudRate = 9600,
+        [int]$Retryes  = 1
+    )
+
+    Begin
+    {
+    # SerialPort Class
+        
+        Write-Verbose "kommer nu att skapa COM objektet" 
+        $serialPort = new-Object System.IO.Ports.SerialPort
+
+        # välj COM-port settings
+        $serialPort.PortName = $ComPort
+        $serialPort.BaudRate = $BaudRate
+        $serialPort.WriteTimeout = 500
+        $serialPort.ReadTimeout = 3000
+        $serialPort.DtrEnable = "true"
+
+        Write-Verbose "bauderate = $BaudRate"
+
+        Write-Verbose "Följande COM port har skapats: $($serialPort.PortName)"
+ 
+    }
+    Process
+    {
+        try 
+        {
+            $serialPort.Close()
+            Write-Verbose "Försöker öppna port $($serialPort.PortName)"
+            $serialPort.Open()
+            Start-Sleep -Milliseconds 350
+        }
+        catch
+        {
+            Write-Warning "Kunde inte koppla upp på första försöket..."
+            Start-Sleep -Milliseconds 200 # låter porten öppnas
+            $serialPort.Open() 
+        }
+
+            Write-Verbose "$($serialPort.PortName) är nu öppnad"
+            if ($Mode -eq "Write")
+            {
+                Write-Verbose "[WRITE]: kommer att skicka $Data till $($serialPort.PortName) $Retryes gånger"
+                $i = 1; 
+                while ($i -le $Retryes){
+                Write-Verbose "[WRITE]: gång $i av $Retryes"                       
+                $serialPort.WriteLine("$Data"); 
+                Start-Sleep -Milliseconds 300
+                $i++ 
+                         
+                }
+            }
+            else 
+            {
+                Write-Verbose "[READ]: kommer att försöka läsa från port $($serialPort.PortName)"
+            }
+
+    }
+    End
+    
+    {
+        try 
+        {
+          $serialPort.Close(); # stänger alltid porten när den är klar. 
+        }
+        catch 
+        {
+           Write-Warning "Kunde inte stänga porten $($serialPort.PortName)"
+        }
+    }
+}
+
+########################## slut Send-MJ-ArduinoData
 
 ##########################################################################################################################################################################################################################
 ##########################################################################################################################################################################################################################
