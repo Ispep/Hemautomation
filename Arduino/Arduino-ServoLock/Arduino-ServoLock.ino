@@ -1,6 +1,6 @@
 // www.Automatiserar.se 
 // 
-// - V 1.0 
+// - V 1.1 
 // - skapad av ISPEP med hjälp av koden från zoomkat. 
 // 
 // Kod för att använda ett servo för att låsa och öppna ett nyckelskåp med indikations lampor.
@@ -33,15 +33,19 @@ Servo myservo;
 
 byte mac[] = {0xAA, 0xAD, 0xBE, 0xEF, 0xFE, 0xED }; //assign arduino mac address
 byte ip[] = {10, 20, 30, 40 }; // ip in lan assigned to arduino
-byte gateway[] = {10, 20, 30, 20 }; // internet access via router
+byte gateway[] = {10, 20, 30, 2 }; // internet access via router
 byte subnet[] = {255, 255, 0, 0 }; //subnet mask
 EthernetServer server(80); //server port arduino server will use
 EthernetClient client;
 //char serverName[] = "dinservern.dindomän.se"; // (DNS) zoomkat's test web page server
 byte serverName[] = { 10, 20, 30, 21 }; // (IP) zoomkat web page server IP address
-
+byte VeraServer[] = { 10, 20, 30, 22};     // IP till din vera
 String readString; //used by server to capture GET request 
 
+// Vera saker 
+String UrlToVera; // url som kommer att skickas till Veran
+String VeraDeviceid = "146";  // ID på servot i veran.
+int    VeraPort     = 3480; 
 //////////////////////
 
 void setup(){
@@ -199,6 +203,7 @@ void ServoOpen(){
     myservo.write(pos);              // tell servo to go to position in variable 'pos'
     delay(10);                       // waits 15ms for the servo to reach the position
     sendGET("OPEN");
+    sendInfoToVera("0");
 }
 
 void ServoClosed(){
@@ -213,6 +218,42 @@ void ServoClosed(){
     myservo.write(pos);              // tell servo to go to position in variable 'pos'
     delay(10);                       // waits 15ms for the servo to reach the position
     sendGET("CLOSED");
+    sendInfoToVera("1");
 }
+
+
+
+void sendInfoToVera(String Mode) 
+{
+  if (client.connect(VeraServer, VeraPort)) {
+    Serial.println("connected to Vera");
+    
+  client.print("GET /data_request?id=variableset&DeviceNum="); 
+  client.print(VeraDeviceid);   
+  client.print("&serviceId=urn:upnp-org:serviceId:VSwitch1&Variable=Status&Value="); 
+  client.print(Mode); 
+  client.println(" HTTP/1.1"); 
+  client.print("Host: ");
+  client.print("Arduino Servo");
+  client.println("Connection: close");
+  client.println();
+  Serial.println("skickade Status till Vera,kopplar ner");
+  client.stop();
+    
+  } 
+  else {
+    Serial.println("connection failed");
+    Serial.println();
+  }
+ 
+  Serial.println();
+  Serial.println("disconnecting.");
+  Serial.println("==================");
+  Serial.println();
+  client.stop();
+
+}
+
+
 
 
