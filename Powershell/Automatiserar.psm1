@@ -1,10 +1,13 @@
-﻿
-<#
+﻿<#
 Skriven av Ispep
 2015-11-16 
 www.automatiserar.se 
 
 All Dokumentation är flyttat till Github 
+
+Version 1.8 - 
+    2015-12-26 - Set-mj-ArduinohttpServo
+	* gör det möjligt att koppla upp med http till en Arduino och styra ett servo. 
 
 Version 1.7 - 
     2015-12-25 - Send-MJ-ArduinoData
@@ -1521,6 +1524,65 @@ function Send-MJ-ArduinoData
 }
 
 ########################## slut Send-MJ-ArduinoData
+
+########################## set-mj-ArduinohttpServo ##################################################################
+
+function set-mj-ArduinohttpServo {
+<#
+.Synopsis
+   skriven av: Ispep
+   skapad:     2015-12-27 
+
+   Funktion för att öppna och stänga ett servo på en Arduino.  
+.DESCRIPTION
+   funktionen gör det möjligt att styra ett servo 90 grader med http kommandon
+.EXAMPLE
+    följande rad tänder en röd diod och släcker en grön på Arduinon, samt vrider servot 90 grader.
+    set-mj-ArduinohttpServo -mode Lock -IP "10.20.30.40"
+.EXAMPLE
+    följande rad släcker den röda dioden och tänder en grön diod, servot vrids 90 grader åt motsatt håll.
+   set-mj-ArduinohttpServo -mode Open -IP "10.20.30.40"
+#>
+[cmdletbinding()]
+param(
+        # Öppna eller stänga Servot 
+        [Parameter(Mandatory=$true, 
+                   Position=0)]
+        [ValidateSet("Lock", "Open")]
+        [Alias("Status")] 
+        $Mode,
+                # Param1 help description
+        [Parameter(Mandatory=$true, 
+                   Position=1)]
+        [Alias("ArduinoIP")] 
+        $IP
+)
+
+
+$MyCommandON = 'http://' + $IP + '/?3on'
+$MyCommandOFF = 'http://' + $IP + '/?3off'
+
+
+    if ($mode -eq "Lock")
+    {
+        Write-Verbose "skickar kommatdo: $MyCommandON"
+        if (((Invoke-WebRequest -Uri $MyCommandON).StatusCode) -eq 204){$true} else {$false}
+    }
+    elseif ($mode -eq "Open")
+    {
+        Write-Verbose "skickar kommatdo: $MyCommandOFF"
+        if (((Invoke-WebRequest -Uri $MyCommandOFF).StatusCode) -eq 204){$true} else {$false}
+
+    }
+    else
+    {
+        Write-Warning "EJ uppmappat kommando!"
+    }
+
+
+}
+
+########################## slut - set-mj-ArduinohttpServo ###########################################################
 
 ##########################################################################################################################################################################################################################
 ##########################################################################################################################################################################################################################
