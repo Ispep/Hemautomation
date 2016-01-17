@@ -2,6 +2,11 @@
  *   2016-01-11 - Automatiserar.se 
  *   Skapad av Ispep - Automatiserar.se 
  *   
+ *   V1.2 - 2016-01-17 
+ *    Lägger till stöd för batteriavläsning.
+ *    Lägger till rapport till http servern för att se tidsåtgång för att rapportera
+ *    Lägger till Version nummer i loggningen till http servern.
+ *    
  *   V1.1 - 2016-01-12
  *    Stänger sleep funktionen i Setup (sparar 4 sekunder / uppstart)
  *    Lägger till ThingSpeakStöd.
@@ -24,6 +29,7 @@
  *    *     http://www.jerome-bernard.com/blog/2015/10/04/wifi-temperature-sensor-with-nodemcu-esp8266/
  */
 
+String KodVersion  = "1.2"; // lägger till version av kod som körs. 
 
 #include <Arduino.h>
 #include <ESP8266WiFi.h>
@@ -61,7 +67,7 @@ ESP8266WiFiMulti WiFiMulti;
 
 // Loggning till Automatiserar.se - HTTP server ( http://www.automatiserar.se/loggning-med-http/ ) 
 
-  String EnhetsNamn         = "ESP8266-NR3";  // Ange namnet som Din esp modul ska registrera 
+  String EnhetsNamn         = "ESP8266-NR4";  // Ange namnet som Din esp modul ska registrera 
   String DestinationsServer = "10.20.30.41"; // ange namnet eller ip dit du vill skicka datat.
   int DestinationsPort      =  86;  // ange porten du vill skicka datat på (normalt port 80)
   bool LoggaTillHttpServern =  true; // anger om detta ska loggas till klienten från länken ovan.  
@@ -74,12 +80,15 @@ ESP8266WiFiMulti WiFiMulti;
   String ThingSpeakIP      = "144.212.80.10"; // IP till thingspeak tjänsten (enheten klarar inte dns just nu)
   bool LoggaTillThingSpeak = true; 
 
+// Läs av batterispäningen på enheten (OBS Resistorerna måste beräknas! Jag har baserat detta på 470K Ohm (R1) och 100K Ohm (R2))
+  float BatteryPower = 6; // Ange hur många volt du matar enheten med ( detta kommer sedan att nyttjas i omräkningen från 1V till korrekt volt)
+  bool  LoggaBatteri = true; // Anger om funktionen för att läsa av batterispänning ska nyttjas.
+  int   VoltDivdierVoltage = 1024; // Agne vilket spänning din spänningsbrygga lämnade vid "full effetkt"  dvs i mitt fall 6V blev ca 1V med 470K ohm och 100k Ohm,dvs värdet att dela med då blir 1024 
 
-  
 // varibler som nyttjas i programmet. 
   bool skickadeOK           = false; 
-
-
+  float BatteryLevel = 0;   // variabel som sätts till noll vid varje uppstart.  
+  
 void setup() {
 
 
@@ -89,6 +98,9 @@ void setup() {
     USE_SERIAL.println();
     USE_SERIAL.println();
     USE_SERIAL.println();
+
+    // ---- V1.2 - Lägger till Mätning av batteri
+    pinMode(A0, INPUT);  // kommer att nyttjas för att läsa av 1V med hjälp av två resistorer som aggerar spänningsdelare (OBS Resistorerna måste beräknas!)
 
     
     DS18B20.begin(); // aktiverar sensorn. 
@@ -110,6 +122,23 @@ float getTemperature() {
   return temp;
 }
 
+// Funktion för att läsa av batterispänningen på ESP med hjälp av 1V (kräver en spännings delare).
+float getBatteryStatus()
+{
+    // V1.2 --- testar att räkna batteristatus.
+    BatteryLevel= analogRead(A0);
+    USE_SERIAL.print("Raw batteri status: ");
+    USE_SERIAL.println(String(BatteryLevel)); 
+
+    BatteryLevel = analogRead(A0);
+    BatteryLevel = (BatteryLevel * BatteryPower) / VoltDivdierVoltage;  // värdet 978 baseras på det värdet jag fick fram när jag matade 6V genom spänningsdelaren och mätte fram 0.978v
+    USE_SERIAL.print("riktigt batterivarde: ");
+    USE_SERIAL.println(String(BatteryLevel));
+    return BatteryLevel; 
+
+    
+}
+
 
 void loop() {
     // wait for WiFi connection
@@ -123,6 +152,12 @@ void loop() {
           // Översätter temperaturen till två XX.XX 
           float temperature = getTemperature();
           dtostrf(temperature, 2, 2, temperatureString);
+
+          // används för att få med batterinåivån. 
+          if (LoggaBatteri)
+          {
+             float test = getBatteryStatus(); 
+          } else {}
 
           // nyttjas om du vill logga till en Vera kontroller. 
           if (LoggaTillVera)
@@ -165,8 +200,15 @@ void loop() {
           if (LoggaTillHttpServern)
          {
              HTTPClient http;
-             http.begin(DestinationsServer, DestinationsPort, "/" + EnhetsNamn + "/" + String(WiFi.RSSI()) + "/" + String(temperature)); 
-      
+
+               if (LoggaBatteri)
+               {
+                  http.begin(DestinationsServer, DestinationsPort, "/" + EnhetsNamn + "/" + KodVersion + "/" + String(WiFi.RSSI()) + "/" + String(temperature) + "/TID:/" + String(millis()) + "/Battery:/" + String(getBatteryStatus())); 
+               } 
+               else 
+               {
+                  http.begin(DestinationsServer, DestinationsPort, "/" + EnhetsNamn + "/" + KodVersion + "/" + String(WiFi.RSSI()) + "/" + String(temperature) + "/TID:/" + String(millis()));                
+               }
              USE_SERIAL.print("[HTTP] GET...\n");
              
              // start connection and send HTTP header
