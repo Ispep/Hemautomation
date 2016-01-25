@@ -1951,6 +1951,120 @@ $MyCommandOFF = 'http://' + $IP + '/?3off'
         }
     }
 
+function Get-TDDeviceHistory
+    {
+        <#
+        .SYNOPSIS
+        Retrieves all events associated with the specified device.
+
+        .DESCRIPTION
+        This command will list all events associated with the specified device
+
+        .EXAMPLE
+        Get-TDDeviceHistory
+
+        .EXAMPLE
+        Get-TDDeviceHistory | Format-Table
+
+        #>
+
+        [cmdletbinding()]
+        param(
+        [Parameter(Mandatory=$True, ValueFromPipeline=$true, ValueFromPipelineByPropertyName=$true)]
+        [Alias('id')]
+        [string] $DeviceID)
+
+        BEGIN {
+            if ($Telldus -eq $null) {
+                Write-Error "You must first connect using the Connect-TelldusLive cmdlet"
+                return
+            }
+        }
+
+        PROCESS {
+            $PostActionURI="http://live.telldus.com/device/history?id=$DeviceID"
+
+            $HistoryEvents = Invoke-RestMethod -Uri $PostActionURI -WebSession $Global:Telldus | select -ExpandProperty History
+
+            foreach ($HistoryEvent in $HistoryEvents)
+            {
+                $PropertiesToOutput = @{
+                                     'DeviceID' = $DeviceID
+                                     'State' = switch ($HistoryEvent.state)
+                                               {
+                                                     1 { "On" }
+                                                     2 { "Off" }
+                                                    16 { "Dimmed" }
+                                                    default { "Unknown" }
+                                               }
+                                     'Statevalue' = $HistoryEvent.statevalue
+                                     'Origin' = $HistoryEvent.Origin;
+                                     'EventDate' = (Get-Date "1970-01-01 00:00:00").AddSeconds($HistoryEvent.ts)
+                                     }
+
+                $returnObject = New-Object -TypeName PSObject -Property $PropertiesToOutput
+
+                Write-Output $returnObject | Select-Object DeviceID, EventDate, State, Statevalue, Origin
+            }
+        }
+
+        END { }
+    }
+
+
+function Get-TDSensorHistoryData
+    {
+        <#
+        .SYNOPSIS
+        Retrieves sensor data history from Telldus Live!
+    
+        .DESCRIPTION
+        This command will retrieve the sensor history data of the specified sensor.
+    
+        .EXAMPLE
+        Get-TDSensorHistoryData -DeviceID 123456
+
+        .EXAMPLE
+        Get-TDSensorHistoryData -DeviceID 123456 | Format-Table
+
+        #>
+
+        [cmdletbinding()]
+        param(
+        [Parameter(Mandatory=$True, ValueFromPipeline=$true, ValueFromPipelineByPropertyName=$true)]
+        [Alias('id')]
+        [string] $DeviceID)
+
+        BEGIN {
+            if ($Telldus -eq $null) {
+                Write-Error "You must first connect using the Connect-TelldusLive cmdlet"
+                return
+            }
+        }
+
+        PROCESS {
+            $PostActionURI="http://live.telldus.com/sensor/history?id=$DeviceID"
+
+            $HistoryDataPoints = Invoke-RestMethod -Uri $PostActionURI -WebSession $Global:Telldus | select -ExpandProperty History
+
+            foreach ($HistoryDataPoint in $HistoryDataPoints)
+            {
+                $PropertiesToOutput = @{
+                                     'DeviceID' = $DeviceID
+                                     'Humidity' = ($HistoryDataPoint.data | Where-Object { $_.Name -eq 'humidity' }).value
+                                     'Temperature' = ($HistoryDataPoint.data | Where-Object { $_.Name -eq 'temp' }).value
+                                     'Date' = (Get-Date "1970-01-01 00:00:00").AddSeconds($HistoryDataPoint.ts)
+                                     }
+
+                $returnObject = New-Object -TypeName PSObject -Property $PropertiesToOutput
+
+                Write-Output $returnObject | Select-Object DeviceID, Humidity, Temperature, Date
+            }
+        }
+
+        END { }
+    }
+
 #===================== SLUT Telldus Live funktioner======================
 # Created By: Anders Wahlqvist
 # Website: DollarUnderscore (http://dollarunderscore.azurewebsites.net)
