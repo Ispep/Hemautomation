@@ -2,6 +2,30 @@
  *   2016-01-11 - Automatiserar.se 
  *   Skapad av Ispep - Automatiserar.se 
  *   
+ *   V1.5 - 2016-02-14
+ *    Testar att stänga alla kommenterar: 
+ *      * bugg - Läses en temperatur inte ur ds18b20 så hamnar sensorn i en loop och drar ur batteriet....
+ *      * nytt thingspeak IP!
+ *      
+ *   V1.4 - 2016-02-09
+ *   
+ *      Städar upp i koden och flyttar in skickning in i en funktion.
+ *      
+ *      Buggfix
+ *        Variabeln skickadeOK kontrollerar nu att sista skicknignen är resultat 200. 
+ *        
+ *   
+ *   V1.3 - 2016-01-18
+ *    Byter till ett annat WIFI bibliotek, detta kommer att köra fast ip för att snabba upp koden. 
+ *    
+ *    Från och med Version 1.3 kan man nyttja Statiskt ip på ESP8266 genom att fylla på adresser nedan.
+ *      IPAddress ip(10, 20, 30, 42);  
+ *      IPAddress gateway(10,20,30,1);
+ *      IPAddress subnet(255,255,0,0);
+ *      
+ *        Genom att nyttja statiskt IP går det att minska tiden från ca 8 sekunder 4.2 sekunder! vilket borde ge nästan dubbel batteritid!
+ *          Utan thingspeak med loggning direkt till http logservern tar det ca 2.2 sekunder! dvs 4 ggr snabbare än version 1.2
+ *
  *   V1.2 - 2016-01-17 
  *    Lägger till stöd för batteriavläsning.
  *    Lägger till rapport till http servern för att se tidsåtgång för att rapportera
@@ -29,7 +53,7 @@
  *    *     http://www.jerome-bernard.com/blog/2015/10/04/wifi-temperature-sensor-with-nodemcu-esp8266/
  */
 
-String KodVersion  = "1.2"; // lägger till version av kod som körs. 
+String MinKodVersion  = "1.5"; // lägger till version av kod som körs. 
 
 #include <Arduino.h>
 #include <ESP8266WiFi.h>
@@ -50,7 +74,10 @@ char temperatureString[6];
 
 ESP8266WiFiMulti WiFiMulti;
 
-
+// V1.3 Faster http request - testar att boosta så att mindre tid går att vänta på IP adress.
+IPAddress ip(10, 20, 30, 40);  // Ange ett ledig ip på ditt subnät
+IPAddress gateway(10,20,30,1);
+IPAddress subnet(255,0,0,0);
 
 // Ange ditt wifi och lösenord. 
   const char* WifiNamn      = "DittWifiNamn";      // Ange namnet på ditt WIFI
@@ -77,7 +104,7 @@ ESP8266WiFiMulti WiFiMulti;
 
   String ThingSpeakKey     = "ThingSpeakKey"; 
   int    ThingSpeakID      = 5;   // ange vilket av de 5 thingspeak id:n du vill uppdatera.
-  String ThingSpeakIP      = "144.212.80.10"; // IP till thingspeak tjänsten (enheten klarar inte dns just nu)
+  String ThingSpeakIP      = "184.106.153.149"; // IP till thingspeak tjänsten (enheten klarar inte dns just nu)
   bool LoggaTillThingSpeak = true; 
 
 // Läs av batterispäningen på enheten (OBS Resistorerna måste beräknas! Jag har baserat detta på 470K Ohm (R1) och 100K Ohm (R2))
@@ -85,15 +112,21 @@ ESP8266WiFiMulti WiFiMulti;
   bool  LoggaBatteri = true; // Anger om funktionen för att läsa av batterispänning ska nyttjas.
   int   VoltDivdierVoltage = 1024; // Agne vilket spänning din spänningsbrygga lämnade vid "full effetkt"  dvs i mitt fall 6V blev ca 1V med 470K ohm och 100k Ohm,dvs värdet att dela med då blir 1024 
 
+
 // varibler som nyttjas i programmet. 
   bool skickadeOK           = false; 
   float BatteryLevel = 0;   // variabel som sätts till noll vid varje uppstart.  
+
+// V1.4 - lägger till max antal ggr enheten försöker koppla upp innan den tvingas ner i sovläge igen.
+  int MaxWifiTests = 50;  // sensorn får max vänta 50 ggr med att försöka koppla upp, enheten läggs i sovläge om detta misslyckas mer än 50 X 100ms = 
+  int WIFILoopCount = 0;  // räkanre som ej får nå MaxWifiTest, om den gör det kommer enheten att läggas i sovläge igen.
+  bool RequireDataTobeSent = false; // används om data verkligen måste levereras varje gång enheten vaknar. 
   
 void setup() {
 
 
     USE_SERIAL.begin(115200);
-   // USE_SERIAL.setDebugOutput(true);
+    USE_SERIAL.setDebugOutput(true);
 
     USE_SERIAL.println();
     USE_SERIAL.println();
@@ -104,13 +137,15 @@ void setup() {
 
     
     DS18B20.begin(); // aktiverar sensorn. 
-    
-    WiFiMulti.addAP(WifiNamn, WifiPass);
 
+    WiFi.begin(WifiNamn, WifiPass);
+    WiFi.config(ip, gateway, subnet);
+    //WiFiMulti.addAP(WifiNamn, WifiPass);
+    //WIFI.config(ip, gateway, subnet);
 }
 
 // funktion för att hämta temperaturen från temp sensorn. 
-float getTemperature() {
+float ReadDS18B20Temperature() {
   USE_SERIAL.print("Requesting DS18B20 temperature...");
   float temp;
   do {
@@ -123,8 +158,7 @@ float getTemperature() {
 }
 
 // Funktion för att läsa av batterispänningen på ESP med hjälp av 1V (kräver en spännings delare).
-float getBatteryStatus()
-{
+float getBatteryStatus(){
     // V1.2 --- testar att räkna batteristatus.
     BatteryLevel= analogRead(A0);
     USE_SERIAL.print("Raw batteri status: ");
@@ -139,153 +173,88 @@ float getBatteryStatus()
     
 }
 
+// --- V 1.3 Bygger en egen funktion av http get, detta för att minska koden.
+int SendHttpData(String DestIP, int DestPort,String MyData){
+   USE_SERIAL.print("[HTTP] begin...\n");
+
+   HTTPClient http;
+   http.begin(DestIP, DestPort,MyData);
+   
+   USE_SERIAL.print("[HTTP] GET...\n");
+   
+   int httpCode = http.GET();
+   
+   return httpCode;
+}
+
+void GoToDeepSleep(int SleepDelay){
+
+ // USE_SERIAL.print("Enheten kommer nu att sova i " + String(SleepDelay) + " sekunder");
+  ESP.deepSleep(SleepDelay * 1000000);
+}
 
 void loop() {
     // wait for WiFi connection
-    if((WiFiMulti.run() == WL_CONNECTED)) {
+    
+    while (WiFi.status() != WL_CONNECTED) {
+    delay(100);
+    USE_SERIAL.print(".");
 
+      // V1.4 - lägger till ett tak på hur länge enheten får försöka koppla upp.
+      if (WIFILoopCount >= MaxWifiTests){  
+        USE_SERIAL.print("Enheten kunde ej koppla upp till WIFI... deep sleep aktiverat");
+        GoToDeepSleep(60); // sover i 60 sekunder.....
+      }
+    WIFILoopCount++;
+    }
         
+      
+          float myTemp = ReadDS18B20Temperature(); // V1.3 -- läser temperatur från DS18B20
 
-        USE_SERIAL.print("[HTTP] begin...\n");
-        // configure traged server and url
-
-          // Översätter temperaturen till två XX.XX 
-          float temperature = getTemperature();
-          dtostrf(temperature, 2, 2, temperatureString);
-
-          // används för att få med batterinåivån. 
           if (LoggaBatteri)
           {
              float test = getBatteryStatus(); 
           } else {}
 
-          // nyttjas om du vill logga till en Vera kontroller. 
+          if (LoggaTillThingSpeak)
+          {
+            
+             String myDataTest2 =  "/update?key=" + ThingSpeakKey + "&field" + String(ThingSpeakID) + "=" + String(myTemp); 
+             skickadeOK = SendHttpData(ThingSpeakIP, 80, myDataTest2);
+             USE_SERIAL.println("Logga till Thingspeak klart"); 
+          }
+
           if (LoggaTillVera)
           {
-                  HTTPClient http;
-                  // http://DittVeraIP:3480/data_request?id=variableset&DeviceNum=68&serviceId=urn:upnp-org:serviceId:TemperatureSensor1&Variable=CurrentTemperature&Value=10.0
-      
-                   http.begin(VeraIP, 3480, "/data_request?id=variableset&DeviceNum=" + String(VeraDeviceID) + "&serviceId=urn:upnp-org:serviceId:TemperatureSensor1&Variable=CurrentTemperature&Value=" + String(temperature));
-      
-                  USE_SERIAL.print("[HTTP] GET...\n");
-                  // start connection and send HTTP header
-                  int httpCode = http.GET();
-                  
-                  if(httpCode) {
-             
-                  // HTTP header has been send and Server response header has been handled
-                  USE_SERIAL.printf("[HTTP] GET... code: %d\n", httpCode);
-          
-                  // file found at server
-                  
-                  if(httpCode == 200) {
-                          
-                          String payload = http.getString();
-                          USE_SERIAL.println("data som mottogs: " + String(payload));
-          
-                          skickadeOK = true;
-                      }                       
-              } else 
-              {
-                  USE_SERIAL.print("[HTTP] GET... failed, no connection or no HTTP server\n");
-              }
-               
-          } else
-          {
-            // Ingen loggning till Vera vald...
+            USE_SERIAL.println("[IF] Logga till Vera"); 
+            String myDataTest1 = "/data_request?id=variableset&DeviceNum=" + String(VeraDeviceID) + "&serviceId=urn:upnp-org:serviceId:TemperatureSensor1&Variable=CurrentTemperature&Value=" + String(myTemp);
+            skickadeOK = SendHttpData(VeraIP, 3480, myDataTest1);
           }
-
-
-          // används om du valt att logga till http servern. 
+          
           if (LoggaTillHttpServern)
-         {
-             HTTPClient http;
-
-               if (LoggaBatteri)
-               {
-                  http.begin(DestinationsServer, DestinationsPort, "/" + EnhetsNamn + "/" + KodVersion + "/" + String(WiFi.RSSI()) + "/" + String(temperature) + "/TID:/" + String(millis()) + "/Battery:/" + String(getBatteryStatus())); 
-               } 
-               else 
-               {
-                  http.begin(DestinationsServer, DestinationsPort, "/" + EnhetsNamn + "/" + KodVersion + "/" + String(WiFi.RSSI()) + "/" + String(temperature) + "/TID:/" + String(millis()));                
-               }
-             USE_SERIAL.print("[HTTP] GET...\n");
-             
-             // start connection and send HTTP header
-             int httpCode = http.GET();
-             if(httpCode) {
-             
-             // HTTP header has been send and Server response header has been handled
-             USE_SERIAL.printf("[HTTP] GET... code: %d\n", httpCode);
-          
-              // file found at server
-                if(httpCode == 200) {
-                          
-                          String payload = http.getString();
-                          USE_SERIAL.println("data som mottogs: " + String(payload));
-          
-                          skickadeOK = true;
-                      }                       
-              } else 
-              {
-                  USE_SERIAL.print("[HTTP] GET... failed, no connection or no HTTP server\n");
-              }
-                
-          } 
-          else
           {
-            // Ingen loggning till http server vald...
+             
+             String myData = "/" + EnhetsNamn + "/" + MinKodVersion + "/" + String(WiFi.RSSI()) + "/" + String(myTemp) + "/TID:/" + String(millis());
+             skickadeOK = SendHttpData(DestinationsServer, DestinationsPort, myData); 
+     //        USE_SERIAL.println("Logga till HTTP servern"); 
+ 
           }
 
-          // Logga till thingspeak 
-         if (LoggaTillThingSpeak)
-         {
-             HTTPClient http;
 
-             // skickar info till thingspeak på vald ID.
-             http.begin(ThingSpeakIP, 80, "/update?key=" + ThingSpeakKey + "&field" + String(ThingSpeakID) + "=" + String(temperature)); 
-      
-             USE_SERIAL.print("[HTTP] GET...\n");
-             
-             // start connection and send HTTP header
-             int httpCode = http.GET();
-             if(httpCode) {
-             
-             // HTTP header has been send and Server response header has been handled
-             USE_SERIAL.printf("[HTTP] GET... code: %d\n", httpCode);
-          
-              // file found at server
-                if(httpCode == 200) {
-                          
-                          String payload = http.getString();
-                          USE_SERIAL.println("data som mottogs: " + String(payload));
-          
-                          skickadeOK = true;
-                      }                       
-              } else 
-              {
-                  USE_SERIAL.print("[HTTP] GET... failed, no connection or no HTTP server\n");
-              }
-                
-          } 
-          else
-          {
-            // Ingen loggning till http server vald...
-          }
-          
-        
-    }
-
-    if (skickadeOK)
+    if (RequireDataTobeSent){
+    if (skickadeOK == 200)
     {
-        USE_SERIAL.println("Enheten kommer nu att sova i " + String(sleepTimeS) + " Sekunder");
-        ESP.deepSleep(sleepTimeS * 1000000);
+        GoToDeepSleep(sleepTimeS); 
     }
     delay(2500); // Om data inte skickas så försöker den igen efter 2,5 sekunder.
-    
+    } else 
+    {
+        GoToDeepSleep(sleepTimeS);      
+    }
     
     
 }
+
 
 
 
