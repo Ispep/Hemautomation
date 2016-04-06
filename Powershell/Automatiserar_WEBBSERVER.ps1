@@ -16,6 +16,8 @@ $loggpath   = C:\temp\       Ange mappen dit du vill att loggfilen ska skapas.
 För att köra scriptet i powershell kan du behöva köra följande rad:
     Set-ExecutionPolicy remotesigned   # detta gör att du får köra script på ditt system. 
 
+v 1.0 [2016-04-06] - 
+        Buggfix - Favicon och teckenuppsättning
 
 V 0.9 [2016-04-05] - 
     * Klara nu att ta emot och verifiera mobilnummer och meddelande
@@ -398,7 +400,7 @@ write-host "För att läsa upp loggar skriv i en webbläsare: http://$($serverIP
         Write-Verbose "[WEBSERVER]:: `$expression = $expression"
             
             Write-Verbose "[WEBSERVER]:: Översätter till Svenska tecken: $expression"
-            $expression = get-KorrektaTecken $expression
+            $expression = get-KorrektaSvenskaTecken $expression
             Write-Verbose "[WEBSERVER]:: Tecken översatta till Svenska: $expression"
 
             write-LogfileInformation -DestinationPath $loggpath -Destinationfilename "ScriptInfo" -SensorName "Uppkoppling" -SensorData ("{1} - klockan {0} - Data - {2}" -f $(get-date), $($socket.RemoteEndPoint), $expression) -logdefault $false # loggar till en speciell logg.
@@ -483,7 +485,14 @@ write-host "För att läsa upp loggar skriv i en webbläsare: http://$($serverIP
 
 
             }
-            else  
+            elseif ($expression -match "favicon.ico")
+            {
+                write-vebose "favicon data..."
+                $result =   CreateWebHead
+                $result +=  CreateWebBody -status "- Ingen Favicon finns... - "
+                $result +=  CreateWebFotter
+            }
+            else   
             {
                 Write-Verbose "[Ingen träff på något filter]"
                 
@@ -495,7 +504,7 @@ write-host "För att läsa upp loggar skriv i en webbläsare: http://$($serverIP
 
 ################# - skickar data till klienten.
         SendHeader $socket $result.Length
-        SendResponse $socket $(get-KorrektaTecken $result)
+        SendResponse $socket $(get-KorrektaSvenskaTecken $result)
         
         }
       $socket.Close()
