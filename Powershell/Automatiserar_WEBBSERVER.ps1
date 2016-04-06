@@ -8,7 +8,7 @@ Dvs min Powershell server.
 
 Här är servern, den stödjer just att skicka SMS, logga data och läsa upp data.
 
-$port=54320 <== om du väljer att nyttja porten eller ta en annan GLÖM inte att öppna i brandväggen på klienten! 
+$port=54320                  Om du väljer att nyttja porten eller ta en annan GLÖM inte att öppna i brandväggen på klienten! 
 $serverIP = "Din servers IP" Ange IP på klienten du kör scriptet på
 $ComPort =  "COM4"           Ange COM porten för ditt modem som ska skicka sms:et, i mitt fall blev det COM4
 $ModemSpeed = 9600           Ange hastigheten för ditt modem, i mitt fall blev det 9600
@@ -42,7 +42,7 @@ Exempel:
 #>
  
 
-param ($port=54320,$serverIP="10.20.30.40",$ComPort="COM4",[int]$ModemSpeed=9600,$loggpath = "C:\Temp\Loggar")
+param ($port=54320,$serverIP="127.0.0.1",$ComPort="COM4",[int]$ModemSpeed=9600,$loggpath = "C:\Temp\Loggar")
 $VerbosePreference = "silentlyContinue"
 [void][reflection.Assembly]::loadWithPartialName("system.net.sockets")
 
@@ -487,7 +487,7 @@ write-host "För att läsa upp loggar skriv i en webbläsare: http://$($serverIP
             }
             elseif ($expression -match "favicon.ico")
             {
-                write-vebose "favicon data..."
+                Write-Verbose "favicon data..."
                 $result =   CreateWebHead
                 $result +=  CreateWebBody -status "- Ingen Favicon finns... - "
                 $result +=  CreateWebFotter
