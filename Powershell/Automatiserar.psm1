@@ -5,6 +5,9 @@ www.automatiserar.se
 
 All Dokumentation är flyttat till Github 
 
+Version 1.9 - 
+                 Read-MJ-ImageRGBPixel -imageURL C:\Temp\demoBild.jpg -PixelX 33 -pixelY 33 -PixelArea 2
+
 Version 1.8 - 
     2015-12-26 - Set-mj-ArduinohttpServo
 	* gör det möjligt att koppla upp med http till en Arduino och styra ett servo. 
@@ -26,6 +29,189 @@ Version 1.6 -
 ###
 
 ##### set och get veramodes #### 
+
+
+
+
+
+
+
+
+
+
+
+function Read-MJ-ImageRGBPixel {
+<#
+.Synopsis
+   Skapat av Ispep 
+   2016-04-20 
+   Version 2
+   www.automatiserar.se
+   Funktion för att läsa fram färgen på en viss pixel i en bild.
+.DESCRIPTION
+   Genom att skicka in en url till en bild och X och Y värdet på en bild returneras ett objekt om bilden.
+.EXAMPLE
+   raden hämtar ut information om pixlarna X22 och Y33
+   Read-MJ-ImageRGBPixel -imageURL C:\temp\DemoBild.jpg -PixelX 22 -pixelY 33
+
+    ImageURL      : C:\Temp\DemoBild.jpg
+    PixelX        : 22
+    PixelY        : 33
+    PixelArea     : 2
+    Success       : True
+    ImageWith     : 640
+    ImageHeight   : 480
+    Red           : 11
+    Red_Max       : 13
+    Red_Avg       : 10
+    Red_Min       : 5
+    Green         : 11
+    Green_Max     : 13
+    Green_Avg     : 10
+    Green_Min     : 5
+    Blue          : 11
+    Blue_Max      : 13
+    Blue_Avg      : 9
+    Blue_Min      : 5
+    ScriptVersion : 2
+
+.EXAMPLE
+   
+#>
+    [cmdletbinding()]
+    param(
+    [Parameter(Mandatory=$true)][string]$imageURL,
+    [int]$PixelX,
+    [int]$pixelY,
+    [int]$PixelArea = 5 # Ange hur stor area runt som ska tas med.
+    
+    )
+
+
+    begin
+    {
+        # Börjar skapa objektet som kommer att returneras
+        $scriptversion = 2
+
+        $PixelObjekt=[ordered]@{
+
+        ImageURL      = $([string]$imageURL)
+        PixelX        = $([int]$PixelX)
+        PixelY        = $([int]$pixelY)
+        PixelArea     = $([int]$PixelArea)
+        Success       = $([bool]$true)
+        ImageWith     = $([int])
+        ImageHeight   = $([int])
+        Red           = $([int])
+        Red_Max       = $([int])
+        Red_Avg       = $([int])
+        Red_Min       = $([int])
+        Green         = $([int])
+        Green_Max     = $([int])
+        Green_Avg     = $([int])
+        Green_Min     = $([int])
+        Blue          = $([int])       
+        Blue_Max      = $([int])              
+        Blue_Avg      = $([int])                 
+        Blue_Min      = $([int])
+        ScriptVersion = $([int]$scriptversion)
+        
+        }
+        $ImageInfo = New-Object -TypeName psobject -Property $PixelObjekt
+
+        if(!(Test-Path $($ImageInfo.imageURL))){Write-Warning "Kunde ej hitta bilden $($ImageInfo.ImageInfo)"; $ImageInfo.Success = $false;}
+    }
+
+    PROCESS{
+
+        if ($ImageInfo.Success){
+            Write-Verbose "$($MyInvocation.InvocationName):: Påbörjar inläsning av bild"
+                
+                Add-Type -AssemblyName System.Drawing
+                $MyBitmapImage = [System.Drawing.Bitmap]::FromFile($ImageInfo.imageURL)
+
+                $ImageInfo.ImageHeight = $MyBitmapImage.Height
+                $ImageInfo.ImageWith   = $MyBitmapImage.Width
+
+                # definierar max / min värdert som ska gås igenom
+                $MinX = $PixelX - $PixelArea
+                $MaxX = $pixelX + $PixelArea
+                $Miny = $pixelY - $PixelArea
+                $MaXy = $pixelY + $PixelArea
+            
+                Write-Verbose "$($MyInvocation.InvocationName):: MinX = $MinX, MaxX = $MaxX, MinY = $minY, MaxY = $MaXy"
+            
+                # Läser in bilden.
+
+                if ($MaxX -le $MyBitmapImage.Width -and $MaXy -le $MyBitmapImage.Height -and $MinX -ge 0 -and $minY -ge 0)
+                {
+                    Write-Verbose "$($MyInvocation.InvocationName):: Pixlarna är inom bildens upplösning" 
+                    
+                        # om man är inom bilden körs detta.
+                    $xValue = $MinX
+                    $yValue = $Miny
+                        $summa = while ($xValue -le $MaxX -and $yValue -le $MaXy){
+        
+                                        while ($xValue -le $MaxX)                                        
+                                        {
+        
+                                            $MyBitmapImage.GetPixel($xValue,$yValue)
+        
+                                            $xValue++
+                                        }
+                                $xValue = $MinX
+                                $yValue++
+                                
+                                }
+                      
+                      $tmpImage = $MyBitmapImage.GetPixel($PixelX, $PixelY)
+                      $ImageInfo.Red     = [int]$tmpImage.r
+                      $ImageInfo.Green   = [int]$tmpImage.g
+                      $ImageInfo.Blue    = [int]$tmpImage.b
+                        
+                      $ImageInfo.Red_Avg   = [int]($summa.r | Measure-Object -Average | Select-Object -ExpandProperty Average)
+                      $ImageInfo.Green_Avg = [int]($summa.g | Measure-Object -Average | Select-Object -ExpandProperty Average)
+                      $ImageInfo.Blue_Avg  = [int]($summa.b | Measure-Object -Average | Select-Object -ExpandProperty Average)                      
+                      $ImageInfo.Red_Max   = [int]($summa.r | Measure-Object -Maximum | Select-Object -ExpandProperty Maximum)
+                      $ImageInfo.Green_Max = [int]($summa.g | Measure-Object -Maximum | Select-Object -ExpandProperty Maximum)
+                      $ImageInfo.Blue_Max  = [int]($summa.b | Measure-Object -Maximum | Select-Object -ExpandProperty Maximum)
+                      $ImageInfo.Red_Min   = [int]($summa.r | Measure-Object -Minimum | Select-Object -ExpandProperty Minimum)
+                      $ImageInfo.Green_Min = [int]($summa.g | Measure-Object -Minimum | Select-Object -ExpandProperty Minimum)
+                      $ImageInfo.Blue_Min  = [int]($summa.b | Measure-Object -Minimum | Select-Object -ExpandProperty Minimum)
+
+
+                      $MyBitmapImage.Dispose()
+                } 
+                
+                else  # Området du valt är utanför bilden
+
+                {
+                Write-Warning "Du har valt ett x / y värde som är utanför bilden"
+                $ImageInfo.Success = $false
+
+                }
+
+        
+        }
+        else
+        {
+            Write-Verbose "$($MyInvocation.InvocationName):: Kunde inte hitta filen $($ImageInfo.imageinfo)"
+            
+        }
+        
+    }
+
+    END
+    {
+            return $ImageInfo
+               
+    }
+
+
+}
+
+
+
 
 function Get-Mj-VeraMode {
 <#
