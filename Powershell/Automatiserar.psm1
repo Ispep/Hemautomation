@@ -1903,6 +1903,9 @@ $MyCommandOFF = 'http://' + $IP + '/?3off'
      
         .EXAMPLE
         Set-TDDevice -DeviceID 123456 -Action turnOn
+
+        .EXAMPLE
+        SET-TDDevice -DeviceID 123456 -Action bell
      
         .PARAMETER DeviceID
         The DeviceID of the device to turn off or on. (Pipelining possible)
@@ -1919,13 +1922,13 @@ $MyCommandOFF = 'http://' + $IP + '/?3off'
           [Alias('id')]
           [string] $DeviceID,
           [Parameter(Mandatory=$True)]
-          [ValidateSet("turnOff","turnOn")]
+          [ValidateSet("turnOff","turnOn","bell")]
           [string] $Action)
      
      
         BEGIN {
             if ($Telldus -eq $null) {
-                Write-Error "You must first connect using the Connect-TelldusLive cmdlet"
+                Write-Error "You must first connect using the Connect-TelldusLive cmdlet"               
                 return
             }
      
